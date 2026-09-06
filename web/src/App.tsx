@@ -41,7 +41,7 @@ export function App() {
     <section className="heading">
       <p className="eyebrow">AVAILABLE POSITIONS</p><h1>Your work portfolio</h1><p className="muted">Choose an active position, manage your duty status, or leave a role you no longer need.</p>
     </section>
-    {notice && <div className="notice"><Shield size={15} />{notice}<button onClick={() => setNotice(null)}><X size={14} /></button></div>}
+    {notice && <div className="notice"><Shield size={15} />{notice}<button className="notice-dismiss" onClick={() => setNotice(null)} aria-label="Dismiss message"><X size={14} /></button></div>}
     <section className="job-grid">
       {jobs.map((job) => {
         const current = job.name === roster.active.name;
