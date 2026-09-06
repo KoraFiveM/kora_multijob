@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { BriefcaseBusiness, Check, ChevronRight, CircleDollarSign, Clock3, LogOut, Power, Shield, X } from "lucide-react";
-import { applyTheme, nui } from "./nui";
+import { nui } from "./nui";
 
 type Job = { name: string; label: string; level: number; rank: string; pay: number; icon: string; dutyLocked: boolean };
 type Roster = { jobs: Job[]; active: { name: string; onDuty: boolean } };
@@ -16,7 +16,6 @@ export function App() {
     const handler = (event: MessageEvent<{ action?: string; data?: unknown }>) => {
       if (event.data.action === "qbmultijob:open") setRoster(event.data.data as Roster);
       if (event.data.action === "qbmultijob:close") { setRoster(null); setNotice(null); }
-      if (event.data.action === "qbmultijob:theme") applyTheme(event.data.data);
     };
     const key = (event: KeyboardEvent) => { if (event.key === "Escape" && roster) void close(); };
     window.addEventListener("message", handler); window.addEventListener("keydown", key);

@@ -19,7 +19,7 @@ local function openMenu()
         return
     end
     open = true
-    send('qbmultijob:theme', QB.theme.tokens())
+    QBTheme.refresh()
     send('qbmultijob:open', roster)
     SetNuiFocus(true, true)
 end
@@ -44,5 +44,5 @@ RegisterNUICallback('qbmultijob:quitJob', function(data, cb)
     cb({ ok = ok == true, roster = type(result) == 'table' and result or nil, error = type(result) == 'string' and result or nil })
 end)
 
-AddEventHandler('qbmultijob:client:theme', function() send('qbmultijob:theme', QB.theme.tokens()) end)
+AddEventHandler('qbmultijob:client:theme', QBTheme.refresh)
 AddEventHandler('onResourceStop', function(resource) if resource == GetCurrentResourceName() then close() end end)

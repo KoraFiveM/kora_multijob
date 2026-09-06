@@ -24,5 +24,5 @@ Grades use qbcore's one-based job grade level. Other resources can call
 ## Configuration
 
 Edit `config.lua` to set the roster limit, command/key binding, duty-locked
-roles, and optional icon names. The UI's colours come from `QB.theme.tokens()`
-so it automatically follows qblib's configured accent colour.
+roles, and optional icon names. The UI imports qbtheme, so it automatically
+follows the shared configured palette.

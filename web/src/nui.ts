@@ -6,7 +6,3 @@ export async function nui<T>(action: string, data: unknown = {}): Promise<T | nu
     return response.ok ? await response.json() as T : null;
   } catch { return null; }
 }
-export function applyTheme(tokens: unknown) {
-  if (!tokens || typeof tokens !== "object") return;
-  for (const [key, value] of Object.entries(tokens as Record<string, unknown>)) if (typeof value === "string") document.documentElement.style.setProperty(`--${key}`, value);
-}

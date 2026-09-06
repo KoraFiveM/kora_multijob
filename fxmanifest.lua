@@ -7,6 +7,7 @@ author 'qbcore2'
 version '1.0.0'
 description 'Saved multi-job roster for qbcore'
 
+dependency 'qbtheme'
 dependency 'qblib'
 dependency 'qbsql'
 dependency 'qbcore'
@@ -25,6 +26,7 @@ server_scripts {
 }
 
 client_scripts {
+    '@qbtheme/client/bridge.lua',
     'client.lua',
 }
 
