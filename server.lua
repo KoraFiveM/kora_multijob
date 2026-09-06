@@ -1,3 +1,4 @@
+---@type table<integer, { citizenid: string, jobs: table<string, table> }>
 local rosterBySource = {}
 local schemaReady = false
 
@@ -47,33 +48,48 @@ end
 
 local function save(src)
     local data = player(src)
-    if not data or not data.citizenid or not rosterBySource[src] then return false end
+    local entry = rosterBySource[src]
+    if not data or not data.citizenid or not entry or entry.citizenid ~= data.citizenid then return false end
     local _, err = QB.sql.upsert('qbmultijob_jobs', 'citizenid', {
-        { citizenid = data.citizenid, jobs = json.encode(rosterBySource[src]) },
+        { citizenid = entry.citizenid, jobs = json.encode(entry.jobs) },
     })
     return not err
 end
 
 local function load(src)
-    if rosterBySource[src] then return rosterBySource[src] end
     if not schemaReady then return nil, 'job storage is still starting' end
     local data = player(src)
     if not data or not data.citizenid then return nil, 'character not loaded' end
-    local row, err = QB.sql.single('SELECT `jobs` FROM `qbmultijob_jobs` WHERE `citizenid` = ?', { data.citizenid })
+    local citizenid = data.citizenid
+    local cached = rosterBySource[src]
+    if cached and cached.citizenid == citizenid then return cached.jobs end
+    rosterBySource[src] = nil
+
+    local row, err = QB.sql.single('SELECT `jobs` FROM `qbmultijob_jobs` WHERE `citizenid` = ?', { citizenid })
     if err then return nil, 'could not load saved jobs' end
+
+    -- SQL yielded. Do not install character A's result after the same source
+    -- has already switched to character B.
+    data = player(src)
+    if not data or data.citizenid ~= citizenid then return nil, 'character changed while jobs were loading' end
+
     local decoded = {}
     if row and type(row.jobs) == 'string' then
         local ok, value = pcall(json.decode, row.jobs)
         if ok and type(value) == 'table' then decoded = value end
     end
-    rosterBySource[src] = normalize(decoded)
+    local jobs = normalize(decoded)
     local active = data.job or {}
     local current = jobRecord(active.name, active.grade and active.grade.level)
-    if current then rosterBySource[src][current.name] = current end
+    if current then jobs[current.name] = current end
     local fallback = jobRecord('unemployed', 1)
-    if fallback then rosterBySource[src].unemployed = fallback end
-    save(src)
-    return rosterBySource[src]
+    if fallback then jobs.unemployed = fallback end
+    rosterBySource[src] = { citizenid = citizenid, jobs = jobs }
+    if not save(src) then
+        rosterBySource[src] = nil
+        return nil, 'could not save roster'
+    end
+    return jobs
 end
 
 local function view(src)
@@ -180,7 +196,17 @@ for _, command in ipairs({
     end)
 end
 
-AddEventHandler('playerDropped', function() rosterBySource[source] = nil end)
+local function invalidate(src)
+    src = tonumber(src)
+    if not src then return false end
+    rosterBySource[src] = nil
+    return true
+end
+
+AddEventHandler('QBCore:Server:OnPlayerUnload', function(src) invalidate(src) end)
+AddEventHandler('qbcore:server:playerLoaded', function(src) invalidate(src) end)
+AddEventHandler('playerDropped', function() invalidate(source) end)
 
 exports('addJob', addJob)
 exports('getRoster', function(src) return view(src) end)
+exports('invalidate', invalidate)
