@@ -51,7 +51,7 @@ local function save(src)
     local entry = rosterBySource[src]
     if not data or not data.citizenid or not entry or entry.citizenid ~= data.citizenid then return false end
     local _, err = QB.sql.upsert('qbmultijob_jobs', 'citizenid', {
-        { citizenid = entry.citizenid, jobs = json.encode(entry.jobs) },
+        { pk = entry.citizenid, cols = { jobs = json.encode(entry.jobs) } },
     })
     return not err
 end

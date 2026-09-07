@@ -43,7 +43,8 @@ local function appDefinition()
         description = 'Saved job roster',
         icon = 'briefcase-business',
         layout = 'compact',
-        width = 760,
+        placement = 'right',
+        width = 500,
         height = 720,
         navigation = {
             {
