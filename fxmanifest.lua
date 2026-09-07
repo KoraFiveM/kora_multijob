@@ -12,8 +12,6 @@ dependency 'qblib'
 dependency 'qbsql'
 dependency 'qbcore'
 
-ui_page 'web/build/index.html'
-
 shared_scripts {
     '@qblib/init.lua',
     '@qbsql/init.lua',
@@ -25,13 +23,8 @@ server_scripts {
     'server.lua',
 }
 
-client_scripts {
-    '@qbtheme/client/bridge.lua',
-    'client.lua',
-}
+client_script 'client.lua'
 
 files {
-    'web/build/index.html',
-    'web/build/**/*',
     'sql/001_jobs.sql',
 }
