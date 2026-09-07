@@ -1,5 +1,5 @@
 local root = debug.getinfo(1, 'S').source:sub(2):match('(.*/)') .. '../'
-local handlers, writes = {}, {}
+local handlers, writes, migrations = {}, {}, nil
 local playerData = {
     citizenid = 'CID-1',
     job = { name = 'police', grade = { level = 2 }, onduty = false },
@@ -7,7 +7,10 @@ local playerData = {
 
 _G.CreateThread = function(handler) handler() end
 _G.AddEventHandler = function(name, handler) handlers[name] = handler end
-_G.LoadResourceFile = function() return 'CREATE TABLE qbmultijob_jobs;' end
+_G.LoadResourceFile = function(_, file)
+    if file == 'sql/001_jobs.sql' then return 'CREATE TABLE IF NOT EXISTS `qbmultijob_jobs` (`citizenid` VARCHAR(64));' end
+    if file == 'sql/002_roster_names.sql' then return 'ALTER TABLE `qbmultijob_jobs` ADD COLUMN IF NOT EXISTS `name` VARCHAR(128);' end
+end
 _G.GetCurrentResourceName = function() return 'qbmultijob' end
 _G.json = {
     encode = function(value)
@@ -29,7 +32,11 @@ _G.exports = setmetatable({
 _G.QB = {
     sql = {
         ready = function() return true end,
-        migrate = function() return true end,
+        migrate = function(resource, definitions)
+            assert(resource == 'qbmultijob', 'the migration resource must be qbmultijob')
+            migrations = definitions
+            return true
+        end,
         single = function() return nil end,
         upsert = function(_, _, rows)
             writes[#writes + 1] = rows[1]
@@ -52,6 +59,10 @@ _G.QB = {
 
 dofile(root .. 'config.lua')
 dofile(root .. 'server.lua')
+
+assert(migrations and #migrations == 2, 'both qbmultijob migrations must be registered')
+assert(migrations[2].sql:match('^ALTER TABLE') and migrations[2].sql:match('ADD COLUMN IF NOT EXISTS'), 'the roster-name migration must be retry-safe DDL')
+assert(not migrations[2].sql:match('UPDATE'), 'the roster-name migration must not contain non-DDL statements')
 
 handlers['QBCore:Server:OnJobUpdate'](1)
 

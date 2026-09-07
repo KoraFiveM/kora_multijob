@@ -11,3 +11,6 @@ Config = {
         realestateagent = 'House', government = 'Landmark', news = 'Newspaper',
     },
 }
+
+-- Registers this resource-owned configuration with qblib without changing its public Config table.
+if QB and QB.config and QB.config.adopt then Config = QB.config.adopt(Config) end
