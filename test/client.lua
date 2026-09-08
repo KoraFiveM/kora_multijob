@@ -36,7 +36,6 @@ _G.QB = {
         if name == 'qbmultijob:server:toggleDuty' then return true, onDuty end
     end },
     nui = {
-        isAppOpen = function() return false end,
         registerApp = function(value) definition = value end,
         openApp = function()
             results.select = definition.onAction('multijob:select', { itemId = 'mechanic' })
@@ -80,5 +79,11 @@ equal(calls[4].name, 'qbmultijob:server:toggleDuty', 'duty routes to the active-
 truthy(results.select.update.navigation, 'select returns a live AppShell update')
 truthy(results.quit.update.navigation, 'quit returns a live AppShell update')
 truthy(results.duty.update.navigation, 'duty returns a live AppShell update')
+
+local clientFile = assert(io.open(root .. 'client.lua', 'r'))
+local clientSource = clientFile:read('*a')
+clientFile:close()
+truthy(not clientSource:find('QB.nui.isAppOpen', 1, true),
+    'job roster owns its AppShell active state without the broken qblib export call')
 
 print(('qbmultijob client: %d assertions passed'):format(passed))

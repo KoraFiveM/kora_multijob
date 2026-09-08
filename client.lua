@@ -1,5 +1,6 @@
 local APP_ID = 'qbmultijob:roster'
 local currentRoster
+local appActive = false
 
 local function money(value)
     return ('$%d'):format(math.floor(tonumber(value) or 0))
@@ -88,17 +89,29 @@ local function appDefinition()
 end
 
 local function openMenu()
-    if QB.nui.isAppOpen(APP_ID) then return end
+    if appActive then return end
+    appActive = true
+
     CreateThread(function()
-        local roster = QB.callback.trigger('qbmultijob:server:getRoster')
-        if type(roster) ~= 'table' then
-            QB.notify.send({ title = 'Employment', type = 'error', message = 'Your job roster is unavailable.' })
-            return
-        end
-        currentRoster = roster
-        QB.nui.registerApp(appDefinition())
-        QB.nui.openApp(APP_ID)
+        local ok, err = pcall(function()
+            local roster = QB.callback.trigger('qbmultijob:server:getRoster')
+            if type(roster) ~= 'table' then
+                QB.notify.send({ title = 'Employment', type = 'error', message = 'Your job roster is unavailable.' })
+                return
+            end
+
+            currentRoster = roster
+            QB.nui.registerApp(appDefinition())
+            QB.nui.openApp(APP_ID)
+        end)
+
         currentRoster = nil
+        appActive = false
+
+        if not ok then
+            print(('^1[qbmultijob]^7 Could not open the job roster: %s'):format(tostring(err)))
+            QB.notify.send({ title = 'Employment', type = 'error', message = 'Your job roster could not be opened.' })
+        end
     end)
 end
 
