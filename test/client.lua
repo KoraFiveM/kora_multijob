@@ -9,8 +9,8 @@ _G.CreateThread = function(handler) handler() end
 local initial = {
     active = { name = 'ambulance', onDuty = false },
     jobs = {
-        { name = 'ambulance', label = 'EMS', rank = 'Paramedic', level = 2, pay = 175, dutyLocked = false },
-        { name = 'mechanic', label = 'Mechanic', rank = 'Technician', level = 1, pay = 120, dutyLocked = false },
+        { name = 'ambulance', jobLabel = 'EMS', gradeLabel = 'Paramedic', level = 2, pay = 175 },
+        { name = 'mechanic', jobLabel = 'Mechanic', gradeLabel = 'Technician', level = 1, pay = 120 },
     },
 }
 local selected = {
@@ -66,6 +66,10 @@ local list = definition.navigation[1].content.blocks[2]
 equal(list.type, 'list', 'the roster is a collection')
 equal(list.layout, 'cards', 'the roster uses job cards')
 truthy(list.searchable, 'the roster can be searched')
+equal(list.items[1].label, 'EMS', 'the roster uses the server-provided job label')
+equal(list.items[1].description, 'Paramedic', 'the roster uses the server-provided grade label')
+equal(list.items[1].metadata[1].value, 2, 'the roster displays the job level')
+equal(list.items[1].metadata[2].value, '$175', 'the roster displays the server-provided pay')
 equal(list.items[1].actions[1].id, 'multijob:duty', 'the active job exposes duty control')
 equal(list.items[2].actions[1].id, 'multijob:select', 'an inactive job can be selected')
 equal(list.items[2].actions[2].id, 'multijob:quit', 'an inactive job can be removed')

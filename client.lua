@@ -14,25 +14,26 @@ local function appDefinition()
 
     for _, job in ipairs(roster.jobs or {}) do
         local selected = job.name == active.name
+        local dutyLocked = Config.disabledDuty[job.name] == true
         if selected then activeJob = job end
         local actions = {}
         if not selected then
             actions[#actions + 1] = { id = 'multijob:select', label = 'Make active', icon = 'check', variant = 'primary' }
-        elseif not job.dutyLocked then
+        elseif not dutyLocked then
             actions[#actions + 1] = { id = 'multijob:duty', label = active.onDuty and 'Go off duty' or 'Go on duty', icon = 'activity' }
         end
         if job.name ~= 'unemployed' and not selected then
             actions[#actions + 1] = { id = 'multijob:quit', label = 'Leave job', icon = 'trash-2', variant = 'destructive',
-                confirm = ('Remove %s from your saved roster?'):format(job.label) }
+                confirm = ('Remove %s from your saved roster?'):format(job.jobLabel) }
         end
         cards[#cards + 1] = {
-            id = job.name, label = job.label, description = job.rank,
-            icon = job.icon, tone = selected and 'primary' or 'neutral',
+            id = job.name, label = job.jobLabel, description = job.gradeLabel,
+            icon = Config.icons[job.name] or 'BriefcaseBusiness', tone = selected and 'primary' or 'neutral',
             badge = selected and (active.onDuty and 'Active · On duty' or 'Active · Off duty') or nil,
             metadata = {
                 { label = 'Grade', value = job.level },
                 { label = 'Pay', value = money(job.pay) },
-                { label = 'Duty', value = job.dutyLocked and 'Managed by job' or 'Self-service' },
+                { label = 'Duty', value = dutyLocked and 'Managed by job' or 'Self-service' },
             },
             actions = actions,
         }
@@ -56,7 +57,7 @@ local function appDefinition()
                     blocks = {
                         { type = 'stats', items = {
                             { label = 'Saved jobs', value = #cards, icon = 'briefcase-business' },
-                            { label = 'Active role', value = activeJob and activeJob.label or active.name or 'None', icon = 'check', tone = 'primary' },
+                            { label = 'Active role', value = activeJob and activeJob.jobLabel or active.name or 'None', icon = 'check', tone = 'primary' },
                             { label = 'Duty status', value = active.onDuty and 'On duty' or 'Off duty', icon = 'activity', tone = active.onDuty and 'success' or 'neutral' },
                         } },
                         { type = 'list', id = 'job-roster', layout = 'cards', searchable = true,
