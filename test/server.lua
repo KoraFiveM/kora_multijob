@@ -37,6 +37,19 @@ _G.QB = {
             migrations = definitions
             return true
         end,
+        migrateFiles = function(resource, definitions)
+            local prepared = {}
+            for index = 1, #definitions do
+                local definition = definitions[index]
+                prepared[index] = {
+                    version = definition.version,
+                    name = definition.name,
+                    sql = LoadResourceFile(resource, definition.file),
+                }
+            end
+            migrations = prepared
+            return true
+        end,
         single = function() return nil end,
         upsert = function(_, _, rows)
             writes[#writes + 1] = rows[1]

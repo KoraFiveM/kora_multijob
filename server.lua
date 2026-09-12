@@ -3,23 +3,15 @@ local rosterBySource = {}
 local schemaReady = false
 local saveActiveJob
 
-local function checksum(value)
-    local hash = 2166136261
-    for i = 1, #value do hash = ((hash ~ value:byte(i)) * 16777619) & 0xFFFFFFFF end
-    return ('%08x'):format(hash)
-end
-
 CreateThread(function()
     local ready = QB.sql.ready(60000)
     if not ready then
         print('^1[qbmultijob]^7 qbsql was not ready; multi-job persistence is unavailable.')
         return
     end
-    local sql = assert(LoadResourceFile(GetCurrentResourceName(), 'sql/001_jobs.sql'), 'missing qbmultijob migration')
-    local names = assert(LoadResourceFile(GetCurrentResourceName(), 'sql/002_roster_names.sql'), 'missing qbmultijob roster-name migration')
-    local _, err = QB.sql.migrate(GetCurrentResourceName(), {
-        { version = 1, name = 'jobs', sql = sql, checksum = checksum(sql) },
-        { version = 2, name = 'roster_names', sql = names, checksum = checksum(names) },
+    local _, err = QB.sql.migrateFiles(GetCurrentResourceName(), {
+        { version = 1, name = 'jobs', file = 'sql/001_jobs.sql' },
+        { version = 2, name = 'roster_names', file = 'sql/002_roster_names.sql' },
     })
     if err then
         print(('^1[qbmultijob]^7 migration failed: %s'):format(err))
