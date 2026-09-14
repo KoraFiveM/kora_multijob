@@ -9,64 +9,82 @@ end
 local function appDefinition()
     local roster = currentRoster or { jobs = {}, active = {} }
     local active = roster.active or {}
-    local cards = {}
-    local activeJob
+    local activeItems = {}
+    local savedItems = {}
 
     for _, job in ipairs(roster.jobs or {}) do
         local selected = job.name == active.name
         local dutyLocked = Config.disabledDuty[job.name] == true
-        if selected then activeJob = job end
         local actions = {}
         if not selected then
             actions[#actions + 1] = { id = 'multijob:select', label = 'Make active', icon = 'check', variant = 'primary' }
         elseif not dutyLocked then
-            actions[#actions + 1] = { id = 'multijob:duty', label = active.onDuty and 'Go off duty' or 'Go on duty', icon = 'activity' }
+            actions[#actions + 1] = {
+                id = 'multijob:duty',
+                label = active.onDuty and 'Go off duty' or 'Go on duty',
+                icon = 'activity',
+                variant = active.onDuty and 'secondary' or 'primary',
+            }
         end
         if job.name ~= 'unemployed' and not selected then
             actions[#actions + 1] = { id = 'multijob:quit', label = 'Leave job', icon = 'trash-2', variant = 'destructive',
                 confirm = ('Remove %s from your saved roster?'):format(job.jobLabel) }
         end
-        cards[#cards + 1] = {
+
+        local metadata = {
+            { label = 'Grade', value = job.level },
+            { label = 'Pay', value = money(job.pay) },
+        }
+        if selected and dutyLocked then
+            metadata[#metadata + 1] = { label = 'Duty', value = 'Managed by job' }
+        end
+
+        local item = {
             id = job.name, label = job.jobLabel, description = job.gradeLabel,
-            icon = Config.icons[job.name] or 'BriefcaseBusiness', tone = selected and 'primary' or 'neutral',
-            badge = selected and (active.onDuty and 'Active · On duty' or 'Active · Off duty') or nil,
-            metadata = {
-                { label = 'Grade', value = job.level },
-                { label = 'Pay', value = money(job.pay) },
-                { label = 'Duty', value = dutyLocked and 'Managed by job' or 'Self-service' },
-            },
+            icon = Config.icons[job.name] or 'BriefcaseBusiness',
+            tone = selected and (active.onDuty and 'success' or 'primary') or 'neutral',
+            badge = selected and (active.onDuty and 'On duty' or 'Off duty') or nil,
+            metadata = metadata,
             actions = actions,
+        }
+
+        if selected then
+            activeItems[1] = item
+        else
+            savedItems[#savedItems + 1] = item
+        end
+    end
+
+    local blocks = {
+        {
+            type = 'list', id = 'active-job', title = 'Current job', layout = 'list', items = activeItems,
+            empty = 'Your current job is unavailable.',
+        },
+    }
+    if #savedItems > 0 then
+        blocks[#blocks + 1] = {
+            type = 'list', id = 'saved-jobs', title = 'Saved jobs', layout = 'list',
+            searchable = #savedItems >= 4, searchPlaceholder = 'Search jobs or ranks…', items = savedItems,
         }
     end
 
     return {
         id = APP_ID,
         title = 'Employment',
-        description = 'Saved job roster',
+        description = ('%d of %d jobs saved'):format(#(roster.jobs or {}), Config.maxJobs + 1),
         icon = 'briefcase-business',
         layout = 'compact',
         placement = 'right',
         width = 500,
-        height = 720,
+        height = 500,
         navigation = {
             {
-                id = 'roster', label = 'My jobs', icon = 'briefcase-business', badge = #cards,
+                id = 'roster', label = 'My jobs', icon = 'briefcase-business', badge = #(roster.jobs or {}),
                 content = {
-                    title = 'Job roster',
-                    description = 'Choose your active role, manage duty, or remove an inactive job.',
-                    blocks = {
-                        { type = 'stats', items = {
-                            { label = 'Saved jobs', value = #cards, icon = 'briefcase-business' },
-                            { label = 'Active role', value = activeJob and activeJob.jobLabel or active.name or 'None', icon = 'check', tone = 'primary' },
-                            { label = 'Duty status', value = active.onDuty and 'On duty' or 'Off duty', icon = 'activity', tone = active.onDuty and 'success' or 'neutral' },
-                        } },
-                        { type = 'list', id = 'job-roster', layout = 'cards', searchable = true,
-                            searchPlaceholder = 'Search jobs or ranks…', items = cards, empty = 'No saved jobs are available.' },
-                    },
+                    blocks = blocks,
                 },
             },
         },
-        footer = ('Up to %d non-civilian jobs can be saved. Changes are verified by the server.'):format(Config.maxJobs),
         onAction = function(actionId, context)
             local jobName = context and context.itemId
             local callback
@@ -83,7 +101,7 @@ local function appDefinition()
             end
             currentRoster = result
             local updated = appDefinition()
-            return { update = { navigation = updated.navigation, footer = updated.footer },
+            return { update = { navigation = updated.navigation, description = updated.description },
                 notice = { tone = 'success', message = 'Job roster updated.' } }
         end,
     }
