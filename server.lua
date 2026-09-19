@@ -11,7 +11,6 @@ CreateThread(function()
     end
     local _, err = QB.sql.migrateFiles(GetCurrentResourceName(), {
         { version = 1, name = 'jobs', file = 'sql/001_jobs.sql' },
-        { version = 2, name = 'roster_names', file = 'sql/002_roster_names.sql' },
     })
     if err then
         print(('^1[qbmultijob]^7 migration failed: %s'):format(err))

@@ -8,8 +8,10 @@ local playerData = {
 _G.CreateThread = function(handler) handler() end
 _G.AddEventHandler = function(name, handler) handlers[name] = handler end
 _G.LoadResourceFile = function(_, file)
-    if file == 'sql/001_jobs.sql' then return 'CREATE TABLE IF NOT EXISTS `qbmultijob_jobs` (`citizenid` VARCHAR(64));' end
-    if file == 'sql/002_roster_names.sql' then return 'ALTER TABLE `qbmultijob_jobs` ADD COLUMN IF NOT EXISTS `name` VARCHAR(128);' end
+    local handle = assert(io.open(root .. file, 'r'))
+    local contents = handle:read('*a')
+    handle:close()
+    return contents
 end
 _G.GetCurrentResourceName = function() return 'qbmultijob' end
 _G.json = {
@@ -73,9 +75,9 @@ _G.QB = {
 dofile(root .. 'config.lua')
 dofile(root .. 'server.lua')
 
-assert(migrations and #migrations == 2, 'both qbmultijob migrations must be registered')
-assert(migrations[2].sql:match('^ALTER TABLE') and migrations[2].sql:match('ADD COLUMN IF NOT EXISTS'), 'the roster-name migration must be retry-safe DDL')
-assert(not migrations[2].sql:match('UPDATE'), 'the roster-name migration must not contain non-DDL statements')
+assert(migrations and #migrations == 1, 'the unreleased qbmultijob schema must be one migration')
+assert(migrations[1].sql:match('CREATE TABLE IF NOT EXISTS'), 'the initial migration must be retry-safe DDL')
+assert(migrations[1].sql:match('`name` VARCHAR%(128%)'), 'the initial migration must include roster names')
 
 handlers['QBCore:Server:OnJobUpdate'](1)
 
