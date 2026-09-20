@@ -17,6 +17,8 @@ _G.GetCurrentResourceName = function() return 'qbmultijob' end
 _G.json = {
     encode = function(value)
         local police = value.police
+        assert(police.gradeLabel == 'Officer' and police.jobLabel == 'Police' and police.pay == 100,
+            'saved records must cache the current job display data')
         return ('police:%s:%s'):format(police.name, police.level)
     end,
     decode = function() return {} end,

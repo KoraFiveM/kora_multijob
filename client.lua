@@ -67,7 +67,8 @@ local function appDefinition()
             searchable = #savedItems >= 4, searchPlaceholder = 'Search jobs or ranks…', items = savedItems,
         }
     end
-
+    local count = #(roster.jobs or {})
+    local heights = { 500, 500, 525, 600, 725 }
     return {
         id = APP_ID,
         title = 'Employment',
@@ -76,7 +77,7 @@ local function appDefinition()
         layout = 'compact',
         placement = 'right',
         width = 500,
-        height = 500,
+        height = heights[math.min(count, #heights)] or heights[1],
         navigation = {
             {
                 id = 'roster', label = 'My jobs', icon = 'briefcase-business', badge = #(roster.jobs or {}),
