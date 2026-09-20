@@ -65,7 +65,7 @@ end
 commands[Config.command]()
 equal(definition.id, 'qbmultijob:roster', 'the shared app has a namespaced id')
 equal(definition.layout, 'compact', 'the roster uses compact AppShell layout')
-equal(definition.height, 500, 'the compact roster does not reserve unnecessary vertical space')
+equal(definition.height, 725, 'a full roster has space for its saved jobs')
 equal(definition.description, '5 of 5 jobs saved', 'the header shows roster capacity')
 local blocks = definition.navigation[1].content.blocks
 local activeList = blocks[1]

@@ -1,4 +1,5 @@
 local playerJobs = {}
+local sourceCitizenids = {}
 local schemaReady = false
 local saveActiveJob
 
@@ -19,9 +20,8 @@ CreateThread(function()
 end)
 
 local function player(src)
-    return type(src) == 'number' and exports.qbcore:getPlayerData(src)
-        or type(src) == 'string' and exports['qb-core']:GetPlayerByCitizenid(src)
-        or type(src) == 'string' and exports['qb-core']:GetOfflinePlayer(src)
+    if type(src) ~= 'number' then return nil end
+    return exports.qbcore:getPlayerData(src)
 end
 
 local function citizenIdOf(src)
@@ -46,21 +46,32 @@ local function jobRecord(name, level)
     return { name = name, level = level, gradeLabel = grade.name, jobLabel = job.label, pay = grade.payment }
 end
 
-local function playerName(src)
-    local pData = player(src)
-    if not pData then return 'unknown' end
-    return string.format('%s %s', pData.charinfo.firstname or '', pData.charinfo.lastname or '')
+local function playerName(data)
+    if type(data) ~= 'table' then return 'unknown' end
+    if type(data.name) == 'string' and data.name ~= '' and data.name ~= 'unknown' then return data.name end
+    local charinfo = data.charinfo or {}
+    local name = ('%s %s'):format(charinfo.firstname or '', charinfo.lastname or ''):gsub('^%s*(.-)%s*$', '%1')
+    return name ~= '' and name or 'unknown'
 end
 
-local function save(src)
-    local citizenid = citizenIdOf(src)
-    if not citizenid then return false, 'could not resolve citizenid' end
+local function normalize(stored)
+    local result = {}
+    for name, record in pairs(type(stored) == 'table' and stored or {}) do
+        local normalized = jobRecord(name, record.level)
+        if normalized then result[name] = normalized end
+    end
+    return result
+end
 
-    local entry = playerJobs[citizenid]
-    if not entry then return false, 'no roster entry found' end
-
-    QB.sql.query('UPDATE `qbmultijob_jobs` SET `jobs` = ? WHERE `citizenid` = ?', { json.encode(entry), citizenid })
-    return true
+local function save(citizenid, name)
+    local jobs = playerJobs[citizenid]
+    if not jobs then return false, 'no roster entry found' end
+    local cols = { jobs = json.encode(jobs) }
+    if type(name) == 'string' and name ~= '' then cols.name = name end
+    local _, err = QB.sql.upsert('qbmultijob_jobs', 'citizenid', {
+        { pk = citizenid, cols = cols },
+    })
+    return not err
 end
 
 local function load(src)
@@ -72,16 +83,20 @@ local function load(src)
     else
         local data = player(src)
         citizenid = data and data.citizenid
+        if citizenid then sourceCitizenids[src] = citizenid end
     end
     if not citizenid then return nil, 'could not resolve citizenid' end
     if playerJobs[citizenid] then return playerJobs[citizenid] end
 
-    local row = QB.sql.single('SELECT `name`, `jobs` FROM `qbmultijob_jobs` WHERE `citizenid` = ?', { citizenid })
+    local row, err = QB.sql.single('SELECT `name`, `jobs` FROM `qbmultijob_jobs` WHERE `citizenid` = ?', { citizenid })
+    if err then return nil, 'could not load saved jobs' end
     if row then
-        playerJobs[citizenid] = json.decode(row.jobs)
+        local ok, decoded = pcall(json.decode, row.jobs or '{}')
+        playerJobs[citizenid] = normalize(ok and decoded or {})
         return playerJobs[citizenid]
     end
 
+    if type(src) == 'string' then return nil, 'no roster on file for this character' end
     local data = player(src)
     if not data then return nil, 'no roster on file and character is not online to create one' end
 
@@ -91,9 +106,10 @@ local function load(src)
         if record then playerJobs[citizenid][data.job.name] = record end
     end
 
-    QB.sql.insert('INSERT INTO `qbmultijob_jobs` (`citizenid`, `name`, `jobs`) VALUES (?, ?, ?)',
-        { citizenid, playerName(src), json.encode(playerJobs[citizenid]) })
-
+    if not save(citizenid, playerName(data)) then
+        playerJobs[citizenid] = nil
+        return nil, 'could not save roster'
+    end
     return playerJobs[citizenid]
 end
 
@@ -103,15 +119,16 @@ saveActiveJob = function(src)
     if not active then return false, 'no active job found' end
 
     local citizenid = data.citizenid
-    if not playerJobs[citizenid] then load(src) end
-    if not playerJobs[citizenid] then return false, 'could not load roster' end
+    if not playerJobs[citizenid] then
+        local roster, err = load(src)
+        return roster ~= nil, err
+    end
 
     local record, err = jobRecord(active.name, active.grade and active.grade.level)
     if not record then return false, err end
 
     playerJobs[citizenid][active.name] = record
-    save(citizenid)
-    return true
+    return save(citizenid)
 end
 
 local function view(src)
@@ -122,11 +139,11 @@ local function view(src)
     local active = data and data.job or {}
     local jobs = {}
     for name, record in pairs((citizenid and playerJobs[citizenid]) or {}) do
-        local definition = QB.shared.get('jobs', name)
-        if definition then
-            record.icon = Config.icons[name] or 'BriefcaseBusiness'
-            record.dutyLocked = Config.disabledDuty[name] == true
-            jobs[#jobs + 1] = record
+        local current = jobRecord(name, record.level)
+        if current then
+            current.icon = Config.icons[name] or 'BriefcaseBusiness'
+            current.dutyLocked = Config.disabledDuty[name] == true
+            jobs[#jobs + 1] = current
         end
     end
     table.sort(jobs, function(a, b) return a.pay > b.pay end)
@@ -142,9 +159,7 @@ QB.callback.register('qbmultijob:server:getRoster', function(src)
 end)
 
 QB.callback.register('qbmultijob:server:selectJob', function(src, name)
-    assert(src, 'source is required')
-    assert(name, 'job name is required')
-    assert(QB.shared.get('jobs', name), 'invalid job name')
+    if type(name) ~= 'string' then return false, 'invalid job' end
 
     local citizenid = citizenIdOf(src)
     if not citizenid then return false, 'character not loaded' end
@@ -162,13 +177,12 @@ QB.callback.register('qbmultijob:server:selectJob', function(src, name)
 end)
 
 QB.callback.register('qbmultijob:server:toggleDuty', function(src)
-    assert(src, 'source is required')
     local data = player(src)
     local job = data and data.job
-    assert(job, 'no active job found')
+    if not job then return false, 'character not loaded' end
     if Config.disabledDuty[job.name] then return false, 'duty changes are disabled for this job' end
     local ok, err = exports.qbcore:setJobDuty(src, not job.onduty)
-    assert(ok, err or 'could not change duty status')
+    if not ok then return false, err or 'could not change duty status' end
     return true, view(src)
 end)
 
@@ -246,86 +260,120 @@ end
 
 
 local function invalidate(src)
-    local citizenid = citizenIdOf(src)
+    local citizenid = sourceCitizenids[src] or citizenIdOf(src)
+    sourceCitizenids[src] = nil
     if citizenid then playerJobs[citizenid] = nil end
     return true
 end
 
 local function getEmployees(jobName)
-	local path = ('$."%s"'):format(jobName)
-	local result = QB.sql.query([[
-		SELECT
-			name,
-			citizenid,
-			JSON_UNQUOTE(JSON_EXTRACT(jobs, CONCAT(?, '.jobLabel'))) AS jobLabel,
-			CONCAT(?, '') AS jobName,
-			CAST(JSON_EXTRACT(jobs, CONCAT(?, '.pay')) AS UNSIGNED) AS pay,
-			CAST(JSON_EXTRACT(jobs, CONCAT(?, '.level')) AS UNSIGNED) AS level
-		FROM qbmultijob_jobs
-		WHERE JSON_CONTAINS_PATH(jobs, 'one', ?)
-	]], { path, jobName, path, path, path })
+    if not schemaReady or not jobRecord(jobName, 1) then return nil, 'unknown job or job storage is still starting' end
+    local rows, err = QB.sql.query('SELECT `citizenid`, `name`, `jobs` FROM `qbmultijob_jobs`')
+    if err then return nil, 'could not load employee roster' end
 
-	return result
+    local employees = {}
+    for _, row in ipairs(rows or {}) do
+        local ok, decoded = pcall(json.decode, row.jobs or '{}')
+        local record = normalize(ok and decoded or {})[jobName]
+        if record then
+            employees[#employees + 1] = {
+                citizenid = row.citizenid,
+                name = row.name ~= '' and row.name or 'unknown',
+                level = record.level,
+            }
+        end
+    end
+    table.sort(employees, function(a, b) return a.name < b.name end)
+    return employees
 end
 
 local function applyJobToPlayer(citizenid, name, level)
     local online = exports.qbcore:getPlayerByCitizenId(citizenid)
     if online then
-        if not online.Functions.SetJob(name, level - 1) then return false, 'could not update online job' end
-        if not online.Functions.Save() then return false, 'could not save online player' end
-        return true
+        return exports.qbcore:setJob(online.source, name, level)
     end
 
-    local offline = exports['qb-core']:GetOfflinePlayer(citizenid)
-    if not offline then return false, 'could not load player (online or offline)' end
+    local offline = exports['qb-core']:GetOfflinePlayerByCitizenId(citizenid)
+    if not offline then return false, 'could not load offline player' end
     if not offline.Functions.SetJob(name, level - 1) then return false, 'could not update offline job' end
     if not offline.Functions.Save() then return false, 'could not save offline player' end
     return true
 end
 
 local function setEmployeeJob(citizenid, name, level)
-    assert(citizenid and name and level, 'invalid arguments')
-    assert(type(level) == 'number' and level > 0, 'invalid level')
-    assert(type(citizenid) == 'string' and citizenid ~= '', 'invalid citizenid')
-    assert(type(name) == 'string' and name ~= '', 'invalid name')
-    assert(QB.shared.get('jobs', name), 'invalid job name')
-
-    if not playerJobs[citizenid] then load(citizenid) end
-    if not playerJobs[citizenid] then return false, 'could not load roster' end
-
     local record, recErr = jobRecord(name, level)
     if not record then return false, recErr end
+    if type(citizenid) ~= 'string' or citizenid == '' or not schemaReady then return false, 'invalid citizenid or job storage is still starting' end
 
-    if not playerJobs[citizenid][name] then
-        return addJob(citizenid, name, level)
+    local target = exports.qbcore:getPlayerByCitizenId(citizenid)
+    if target then
+        local roster, err = load(target.source)
+        if not roster then return false, err end
+        roster[name] = record
+        if target.job and target.job.name == name then
+            local changed, changeErr = exports.qbcore:setJob(target.source, name, record.level)
+            if not changed then return false, changeErr or 'could not update active job' end
+        end
+        return save(citizenid), 'could not save roster'
     end
 
-    local ok, err = applyJobToPlayer(citizenid, name, level)
-    if not ok then return false, err end
-
-    playerJobs[citizenid][name] = record
-    if not save(citizenid) then return false, 'could not save roster' end
+    local row, rowErr = QB.sql.single('SELECT `name`, `jobs` FROM `qbmultijob_jobs` WHERE `citizenid` = ?', { citizenid })
+    if rowErr then return false, 'could not load employee jobs' end
+    local character, characterErr = QB.sql.single('SELECT `name`, `job` FROM `players` WHERE `citizenid` = ? AND `deleted_at` IS NULL', { citizenid })
+    if characterErr or not character then return false, 'employee was not found' end
+    local decoded = {}
+    if row then
+        local ok, value = pcall(json.decode, row.jobs or '{}')
+        if ok then decoded = value end
+    end
+    local jobs = normalize(decoded)
+    jobs[name] = record
+    playerJobs[citizenid] = jobs
+    local activeOk, active = pcall(json.decode, character.job or '{}')
+    if activeOk and active and active.name == name then
+        local changed, changeErr = applyJobToPlayer(citizenid, name, record.level)
+        if not changed then return false, changeErr end
+    end
+    local saved, saveErr = save(citizenid, row and nil or character.name)
+    playerJobs[citizenid] = nil
+    if not saved then return false, saveErr or 'could not save roster' end
     return true
 end
 
 local function removeEmployeeJob(citizenid, name)
-    assert(citizenid and name, 'invalid arguments')
-    assert(type(citizenid) == 'string' and citizenid ~= '', 'invalid citizenid')
-    assert(type(name) == 'string' and name ~= '', 'invalid name')
-    assert(name ~= 'unemployed', 'cannot remove unemployed job')
+    if type(citizenid) ~= 'string' or type(name) ~= 'string' or name == 'unemployed' then return false, 'invalid employee job' end
+    if not schemaReady or not jobRecord(name, 1) then return false, 'unknown job or job storage is still starting' end
 
-    if not playerJobs[citizenid] then load(citizenid) end
-    if not playerJobs[citizenid] then return false, 'could not load roster' end
-    if not playerJobs[citizenid][name] then return false, 'employee does not have that job' end
-
-    playerJobs[citizenid][name] = nil
-
-    local target = exports.qbcore:getPlayerByCitizenId(citizenid) or exports['qb-core']:GetOfflinePlayer(citizenid)
-    if target and target.job and target.job.name == name then
-        applyJobToPlayer(citizenid, 'unemployed', 1)
+    local target = exports.qbcore:getPlayerByCitizenId(citizenid)
+    if target then
+        local roster, err = load(target.source)
+        if not roster or not roster[name] then return false, err or 'employee does not have that job' end
+        roster[name] = nil
+        if target.job and target.job.name == name then
+            local changed, changeErr = exports.qbcore:setJob(target.source, 'unemployed', 1)
+            if not changed then return false, changeErr or 'could not clear active job' end
+        end
+        return save(citizenid), 'could not save roster'
     end
 
-    return save(citizenid)
+    local row, rowErr = QB.sql.single('SELECT `jobs` FROM `qbmultijob_jobs` WHERE `citizenid` = ?', { citizenid })
+    if rowErr then return false, 'could not load employee jobs' end
+    if not row then return false, 'employee was not found' end
+    local ok, decoded = pcall(json.decode, row.jobs or '{}')
+    local jobs = normalize(ok and decoded or {})
+    if not jobs[name] then return false, 'employee does not have that job' end
+    jobs[name] = nil
+    local character, characterErr = QB.sql.single('SELECT `job` FROM `players` WHERE `citizenid` = ? AND `deleted_at` IS NULL', { citizenid })
+    if characterErr or not character then return false, 'employee was not found' end
+    local activeOk, active = pcall(json.decode, character.job or '{}')
+    if activeOk and active and active.name == name then
+        local changed, changeErr = applyJobToPlayer(citizenid, 'unemployed', 1)
+        if not changed then return false, changeErr end
+    end
+    playerJobs[citizenid] = jobs
+    local saved, saveErr = save(citizenid)
+    playerJobs[citizenid] = nil
+    return saved, saveErr
 end
 
 AddEventHandler('QBCore:Server:OnPlayerUnload', function(src) invalidate(src) end)

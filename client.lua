@@ -67,9 +67,8 @@ local function appDefinition()
             searchable = #savedItems >= 4, searchPlaceholder = 'Search jobs or ranks…', items = savedItems,
         }
     end
-    local heights = {
-        500, 500, 525, 600, 725
-    }
+    local count = #(roster.jobs or {})
+    local heights = { 500, 500, 525, 600, 725 }
     return {
         id = APP_ID,
         title = 'Employment',
@@ -78,7 +77,7 @@ local function appDefinition()
         layout = 'compact',
         placement = 'right',
         width = 500,
-        height = heights[#roster.jobs or {} + 1],
+        height = heights[math.min(count, #heights)] or heights[1],
         navigation = {
             {
                 id = 'roster', label = 'My jobs', icon = 'briefcase-business', badge = #(roster.jobs or {}),
@@ -116,7 +115,6 @@ local function openMenu()
     CreateThread(function()
         local ok, err = pcall(function()
             local roster = QB.callback.trigger('qbmultijob:server:getRoster')
-            QB.print.debug(roster)
             if type(roster) ~= 'table' then
                 QB.notify.send({ title = 'Employment', type = 'error', message = 'Your job roster is unavailable.' })
                 return
