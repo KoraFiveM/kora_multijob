@@ -293,11 +293,7 @@ local function applyJobToPlayer(citizenid, name, level)
         return exports.qbcore:setJob(online.source, name, level)
     end
 
-    local offline = exports['qb-core']:GetOfflinePlayerByCitizenId(citizenid)
-    if not offline then return false, 'could not load offline player' end
-    if not offline.Functions.SetJob(name, level - 1) then return false, 'could not update offline job' end
-    if not offline.Functions.Save() then return false, 'could not save offline player' end
-    return true
+    return exports.qbcore:setOfflineJob(citizenid, name, level)
 end
 
 local function setEmployeeJob(citizenid, name, level)
