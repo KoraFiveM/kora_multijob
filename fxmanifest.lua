@@ -2,20 +2,22 @@ fx_version 'cerulean'
 game 'gta5'
 lua54 'yes'
 
-name 'qbmultijob'
+name 'kora_multijob'
+-- Keep the legacy resource name resolvable for exports['qbmultijob'] callers.
+provide 'qbmultijob'
 author 'qbcore2'
 version '1.0.0'
 description 'Saved multi-job roster for qbcore'
 
-dependency 'qbtheme'
-dependency 'qblib'
-dependency 'qbsql'
-dependency 'qbcore'
+dependency 'kora_theme'
+dependency 'kora_lib'
+dependency 'kora_sql'
+dependency 'kora_core'
 
 shared_scripts {
-    '@qblib/init.lua',
-    '@qbsql/init.lua',
-    '@qbcore/init.lua',
+    '@kora_lib/init.lua',
+    '@kora_sql/init.lua',
+    '@kora_core/init.lua',
     'config.lua',
 }
 

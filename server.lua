@@ -21,7 +21,7 @@ end)
 
 local function player(src)
     if type(src) ~= 'number' then return nil end
-    return exports.qbcore:getPlayerData(src)
+    return exports.kora_core:getPlayerData(src)
 end
 
 local function citizenIdOf(src)
@@ -168,7 +168,7 @@ QB.callback.register('qbmultijob:server:selectJob', function(src, name)
     local record = playerJobs[citizenid] and playerJobs[citizenid][name]
     if not record then return false, 'that job is not in your roster' end
 
-    if exports.qbcore:setJob(src, name, record.level) then
+    if exports.kora_core:setJob(src, name, record.level) then
         notify(src, 'success', ('Active job set to %s.'):format((QB.shared.get('jobs', name) or {}).label or name))
         return true, view(src)
     end
@@ -181,7 +181,7 @@ QB.callback.register('qbmultijob:server:toggleDuty', function(src)
     local job = data and data.job
     if not job then return false, 'character not loaded' end
     if Config.disabledDuty[job.name] then return false, 'duty changes are disabled for this job' end
-    local ok, err = exports.qbcore:setJobDuty(src, not job.onduty)
+    local ok, err = exports.kora_core:setJobDuty(src, not job.onduty)
     if not ok then return false, err or 'could not change duty status' end
     return true, view(src)
 end)
@@ -205,7 +205,7 @@ QB.callback.register('qbmultijob:server:quitJob', function(src, name)
 end)
 
 
-local function canManage(src) return src == 0 or exports.qbcore:hasPermission(src, 'admin') end
+local function canManage(src) return src == 0 or exports.kora_core:hasPermission(src, 'admin') end
 
 local function addJob(src, name, level)
     local citizenid = citizenIdOf(src)
@@ -236,7 +236,7 @@ end
 for _, command in ipairs({
     { name = 'givejob', help = 'Add or update a player job', handler = function(src, args)
         local target, level = tonumber(args[1]), tonumber(args[3])
-        if not target or not args[2] or not level or not exports.qbcore:getPlayerData(target) then return notify(src, 'error', 'Usage: /givejob [id] [job] [grade]') end
+        if not target or not args[2] or not level or not exports.kora_core:getPlayerData(target) then return notify(src, 'error', 'Usage: /givejob [id] [job] [grade]') end
         local ok, err = addJob(target, args[2], level)
         notify(src, ok and 'success' or 'error', ok and 'Job saved.' or err)
         if ok then notify(target, 'success', 'A job was added to your roster.') end
@@ -246,7 +246,7 @@ for _, command in ipairs({
         if not target or not name then return notify(src, 'error', 'Usage: /removejob [id] [job]') end
         local roster = load(target)
         if not roster or not roster[name] or name == 'unemployed' then return notify(src, 'error', 'Player does not have that removable job.') end
-        if exports.qbcore:getPlayerData(target, { 'job', 'name' }) == name then return notify(src, 'error', 'Player must change active job first.') end
+        if exports.kora_core:getPlayerData(target, { 'job', 'name' }) == name then return notify(src, 'error', 'Player must change active job first.') end
         roster[name] = nil
         local ok = save(target)
         notify(src, ok and 'success' or 'error', ok and 'Job removed.' or 'Could not save roster.')
@@ -288,12 +288,12 @@ local function getEmployees(jobName)
 end
 
 local function applyJobToPlayer(citizenid, name, level)
-    local online = exports.qbcore:getPlayerByCitizenId(citizenid)
+    local online = exports.kora_core:getPlayerByCitizenId(citizenid)
     if online then
-        return exports.qbcore:setJob(online.source, name, level)
+        return exports.kora_core:setJob(online.source, name, level)
     end
 
-    return exports.qbcore:setOfflineJob(citizenid, name, level)
+    return exports.kora_core:setOfflineJob(citizenid, name, level)
 end
 
 local function setEmployeeJob(citizenid, name, level)
@@ -301,13 +301,13 @@ local function setEmployeeJob(citizenid, name, level)
     if not record then return false, recErr end
     if type(citizenid) ~= 'string' or citizenid == '' or not schemaReady then return false, 'invalid citizenid or job storage is still starting' end
 
-    local target = exports.qbcore:getPlayerByCitizenId(citizenid)
+    local target = exports.kora_core:getPlayerByCitizenId(citizenid)
     if target then
         local roster, err = load(target.source)
         if not roster then return false, err end
         roster[name] = record
         if target.job and target.job.name == name then
-            local changed, changeErr = exports.qbcore:setJob(target.source, name, record.level)
+            local changed, changeErr = exports.kora_core:setJob(target.source, name, record.level)
             if not changed then return false, changeErr or 'could not update active job' end
         end
         return save(citizenid), 'could not save roster'
@@ -340,13 +340,13 @@ local function removeEmployeeJob(citizenid, name)
     if type(citizenid) ~= 'string' or type(name) ~= 'string' or name == 'unemployed' then return false, 'invalid employee job' end
     if not schemaReady or not jobRecord(name, 1) then return false, 'unknown job or job storage is still starting' end
 
-    local target = exports.qbcore:getPlayerByCitizenId(citizenid)
+    local target = exports.kora_core:getPlayerByCitizenId(citizenid)
     if target then
         local roster, err = load(target.source)
         if not roster or not roster[name] then return false, err or 'employee does not have that job' end
         roster[name] = nil
         if target.job and target.job.name == name then
-            local changed, changeErr = exports.qbcore:setJob(target.source, 'unemployed', 1)
+            local changed, changeErr = exports.kora_core:setJob(target.source, 'unemployed', 1)
             if not changed then return false, changeErr or 'could not clear active job' end
         end
         return save(citizenid), 'could not save roster'
@@ -386,7 +386,7 @@ end)
 AddEventHandler('playerDropped', function() invalidate(tonumber(source)) end)
 
 CreateThread(function()
-    for _, src in ipairs(exports.qbcore:getPlayers()) do saveActiveJob(src) end
+    for _, src in ipairs(exports.kora_core:getPlayers()) do saveActiveJob(src) end
 end)
 
 exports('addJob', addJob)

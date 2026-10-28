@@ -1,5 +1,5 @@
 declare global { interface Window { GetParentResourceName?: () => string } }
-export const resource = () => window.GetParentResourceName?.() ?? "qbmultijob";
+export const resource = () => window.GetParentResourceName?.() ?? "kora_multijob";
 export async function nui<T>(action: string, data: unknown = {}): Promise<T | null> {
   try {
     const response = await fetch(`https://${resource()}/${action}`, { method: "POST", headers: { "Content-Type": "application/json; charset=UTF-8" }, body: JSON.stringify(data) });

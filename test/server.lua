@@ -13,7 +13,7 @@ _G.LoadResourceFile = function(_, file)
     handle:close()
     return contents
 end
-_G.GetCurrentResourceName = function() return 'qbmultijob' end
+_G.GetCurrentResourceName = function() return 'kora_multijob' end
 _G.json = {
     encode = function(value)
         local police = value.police
@@ -26,7 +26,7 @@ _G.json = {
 
 local exported = {}
 _G.exports = setmetatable({
-    qbcore = {
+    kora_core = {
         getPlayerData = function(_, src) return src == 1 and playerData or nil end,
         getPlayers = function() return {} end,
         hasPermission = function() return true end,
@@ -37,7 +37,7 @@ _G.QB = {
     sql = {
         ready = function() return true end,
         migrate = function(resource, definitions)
-            assert(resource == 'qbmultijob', 'the migration resource must be qbmultijob')
+            assert(resource == 'kora_multijob', 'the migration resource must be qbmultijob')
             migrations = definitions
             return true
         end,
