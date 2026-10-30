@@ -101,6 +101,6 @@ local clientFile = assert(io.open(root .. 'client.lua', 'r'))
 local clientSource = clientFile:read('*a')
 clientFile:close()
 truthy(not clientSource:find('QB.nui.isAppOpen', 1, true),
-    'job roster owns its AppShell active state without the broken qblib export call')
+    'job roster owns its AppShell active state without the broken kora_lib export call')
 
 print(('qbmultijob client: %d assertions passed'):format(passed))
