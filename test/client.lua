@@ -29,7 +29,7 @@ local onDuty = {
     jobs = afterQuit.jobs,
 }
 
-_G.QB = {
+_G.Kora = {
     notify = { send = function() end },
     callback = { trigger = function(name, value)
         calls[#calls + 1] = { name = name, value = value }
@@ -100,7 +100,7 @@ equal(results.quit.update.description, '1 of 5 jobs saved', 'live updates refres
 local clientFile = assert(io.open(root .. 'client.lua', 'r'))
 local clientSource = clientFile:read('*a')
 clientFile:close()
-truthy(not clientSource:find('QB.nui.isAppOpen', 1, true),
+truthy(not clientSource:find('Kora.nui.isAppOpen', 1, true),
     'job roster owns its AppShell active state without the broken kora_lib export call')
 
 print(('qbmultijob client: %d assertions passed'):format(passed))

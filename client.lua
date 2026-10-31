@@ -95,8 +95,8 @@ local function appDefinition()
             else error('That roster action is no longer available.') end
 
             local ok, result
-            if actionId == 'multijob:duty' then ok, result = QB.callback.trigger(callback)
-            else ok, result = QB.callback.trigger(callback, jobName) end
+            if actionId == 'multijob:duty' then ok, result = Kora.callback.trigger(callback)
+            else ok, result = Kora.callback.trigger(callback, jobName) end
             if not ok or type(result) ~= 'table' then
                 return { notice = { tone = 'destructive', message = type(result) == 'string' and result or 'The roster change was declined.' } }
             end
@@ -114,15 +114,15 @@ local function openMenu()
 
     CreateThread(function()
         local ok, err = pcall(function()
-            local roster = QB.callback.trigger('qbmultijob:server:getRoster')
+            local roster = Kora.callback.trigger('qbmultijob:server:getRoster')
             if type(roster) ~= 'table' then
-                QB.notify.send({ title = 'Employment', type = 'error', message = 'Your job roster is unavailable.' })
+                Kora.notify.send({ title = 'Employment', type = 'error', message = 'Your job roster is unavailable.' })
                 return
             end
 
             currentRoster = roster
-            QB.nui.registerApp(appDefinition())
-            QB.nui.openApp(APP_ID)
+            Kora.nui.registerApp(appDefinition())
+            Kora.nui.openApp(APP_ID)
         end)
 
         currentRoster = nil
@@ -130,7 +130,7 @@ local function openMenu()
 
         if not ok then
             print(('^1[qbmultijob]^7 Could not open the job roster: %s'):format(tostring(err)))
-            QB.notify.send({ title = 'Employment', type = 'error', message = 'Your job roster could not be opened.' })
+            Kora.notify.send({ title = 'Employment', type = 'error', message = 'Your job roster could not be opened.' })
         end
     end)
 end

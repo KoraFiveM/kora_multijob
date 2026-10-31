@@ -33,7 +33,7 @@ _G.exports = setmetatable({
     },
 }, { __call = function(_, name, fn) exported[name] = fn end })
 
-_G.QB = {
+_G.Kora = {
     sql = {
         ready = function() return true end,
         migrate = function(resource, definitions)

@@ -13,8 +13,8 @@ Config = {
 }
 
 -- Registers this resource-owned configuration with kora_lib without changing its public Config table.
-if QB and QB.config and QB.config.adopt then
-    local config = QB.config
+if Kora and Kora.config and Kora.config.adopt then
+    local config = Kora.config
     Config.maxJobs = config.integer(Config.maxJobs, {
         min = 0,
         label = 'Saved jobs per character', advanced = false,

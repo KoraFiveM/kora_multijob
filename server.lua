@@ -4,12 +4,12 @@ local schemaReady = false
 local saveActiveJob
 
 CreateThread(function()
-    local ready = QB.sql.ready(60000)
+    local ready = Kora.sql.ready(60000)
     if not ready then
         print('^1[qbmultijob]^7 qbsql was not ready; multi-job persistence is unavailable.')
         return
     end
-    local _, err = QB.sql.migrateFiles(GetCurrentResourceName(), {
+    local _, err = Kora.sql.migrateFiles(GetCurrentResourceName(), {
         { version = 1, name = 'jobs', file = 'sql/001_jobs.sql' },
     })
     if err then
@@ -37,7 +37,7 @@ local function jobRecord(name, level)
         level = 1
     end
 
-    local job = QB.shared.get('jobs', name)
+    local job = Kora.shared.get('jobs', name)
     if not job then return nil, 'unknown job' end
 
     local grade = job.grades and job.grades[level]
@@ -68,7 +68,7 @@ local function save(citizenid, name)
     if not jobs then return false, 'no roster entry found' end
     local cols = { jobs = json.encode(jobs) }
     if type(name) == 'string' and name ~= '' then cols.name = name end
-    local _, err = QB.sql.upsert('qbmultijob_jobs', 'citizenid', {
+    local _, err = Kora.sql.upsert('qbmultijob_jobs', 'citizenid', {
         { pk = citizenid, cols = cols },
     })
     return not err
@@ -88,7 +88,7 @@ local function load(src)
     if not citizenid then return nil, 'could not resolve citizenid' end
     if playerJobs[citizenid] then return playerJobs[citizenid] end
 
-    local row, err = QB.sql.single('SELECT `name`, `jobs` FROM `qbmultijob_jobs` WHERE `citizenid` = ?', { citizenid })
+    local row, err = Kora.sql.single('SELECT `name`, `jobs` FROM `qbmultijob_jobs` WHERE `citizenid` = ?', { citizenid })
     if err then return nil, 'could not load saved jobs' end
     if row then
         local ok, decoded = pcall(json.decode, row.jobs or '{}')
@@ -151,14 +151,14 @@ local function view(src)
 end
 
 local function notify(src, type_, message)
-    QB.notify.send(src, { title = 'Employment', type = type_, message = message })
+    Kora.notify.send(src, { title = 'Employment', type = type_, message = message })
 end
 
-QB.callback.register('qbmultijob:server:getRoster', function(src)
+Kora.callback.register('qbmultijob:server:getRoster', function(src)
     return view(src)
 end)
 
-QB.callback.register('qbmultijob:server:selectJob', function(src, name)
+Kora.callback.register('qbmultijob:server:selectJob', function(src, name)
     if type(name) ~= 'string' then return false, 'invalid job' end
 
     local citizenid = citizenIdOf(src)
@@ -169,14 +169,14 @@ QB.callback.register('qbmultijob:server:selectJob', function(src, name)
     if not record then return false, 'that job is not in your roster' end
 
     if exports.kora_core:setJob(src, name, record.level) then
-        notify(src, 'success', ('Active job set to %s.'):format((QB.shared.get('jobs', name) or {}).label or name))
+        notify(src, 'success', ('Active job set to %s.'):format((Kora.shared.get('jobs', name) or {}).label or name))
         return true, view(src)
     end
 
     return false, 'could not set active job'
 end)
 
-QB.callback.register('qbmultijob:server:toggleDuty', function(src)
+Kora.callback.register('qbmultijob:server:toggleDuty', function(src)
     local data = player(src)
     local job = data and data.job
     if not job then return false, 'character not loaded' end
@@ -186,7 +186,7 @@ QB.callback.register('qbmultijob:server:toggleDuty', function(src)
     return true, view(src)
 end)
 
-QB.callback.register('qbmultijob:server:quitJob', function(src, name)
+Kora.callback.register('qbmultijob:server:quitJob', function(src, name)
     if type(name) ~= 'string' or name == 'unemployed' then return false, 'that job cannot be removed' end
 
     local data = player(src)
@@ -252,7 +252,7 @@ for _, command in ipairs({
         notify(src, ok and 'success' or 'error', ok and 'Job removed.' or 'Could not save roster.')
     end },
 }) do
-    QB.commands.add(command.name, command.help, nil, false, function(src, args)
+    Kora.commands.add(command.name, command.help, nil, false, function(src, args)
         if not canManage(src) then return notify(src, 'error', 'You do not have permission for this command.') end
         command.handler(src, args)
     end)
@@ -268,7 +268,7 @@ end
 
 local function getEmployees(jobName)
     if not schemaReady or not jobRecord(jobName, 1) then return nil, 'unknown job or job storage is still starting' end
-    local rows, err = QB.sql.query('SELECT `citizenid`, `name`, `jobs` FROM `qbmultijob_jobs`')
+    local rows, err = Kora.sql.query('SELECT `citizenid`, `name`, `jobs` FROM `qbmultijob_jobs`')
     if err then return nil, 'could not load employee roster' end
 
     local employees = {}
@@ -313,9 +313,9 @@ local function setEmployeeJob(citizenid, name, level)
         return save(citizenid), 'could not save roster'
     end
 
-    local row, rowErr = QB.sql.single('SELECT `name`, `jobs` FROM `qbmultijob_jobs` WHERE `citizenid` = ?', { citizenid })
+    local row, rowErr = Kora.sql.single('SELECT `name`, `jobs` FROM `qbmultijob_jobs` WHERE `citizenid` = ?', { citizenid })
     if rowErr then return false, 'could not load employee jobs' end
-    local character, characterErr = QB.sql.single('SELECT `name`, `job` FROM `players` WHERE `citizenid` = ? AND `deleted_at` IS NULL', { citizenid })
+    local character, characterErr = Kora.sql.single('SELECT `name`, `job` FROM `players` WHERE `citizenid` = ? AND `deleted_at` IS NULL', { citizenid })
     if characterErr or not character then return false, 'employee was not found' end
     local decoded = {}
     if row then
@@ -352,14 +352,14 @@ local function removeEmployeeJob(citizenid, name)
         return save(citizenid), 'could not save roster'
     end
 
-    local row, rowErr = QB.sql.single('SELECT `jobs` FROM `qbmultijob_jobs` WHERE `citizenid` = ?', { citizenid })
+    local row, rowErr = Kora.sql.single('SELECT `jobs` FROM `qbmultijob_jobs` WHERE `citizenid` = ?', { citizenid })
     if rowErr then return false, 'could not load employee jobs' end
     if not row then return false, 'employee was not found' end
     local ok, decoded = pcall(json.decode, row.jobs or '{}')
     local jobs = normalize(ok and decoded or {})
     if not jobs[name] then return false, 'employee does not have that job' end
     jobs[name] = nil
-    local character, characterErr = QB.sql.single('SELECT `job` FROM `players` WHERE `citizenid` = ? AND `deleted_at` IS NULL', { citizenid })
+    local character, characterErr = Kora.sql.single('SELECT `job` FROM `players` WHERE `citizenid` = ? AND `deleted_at` IS NULL', { citizenid })
     if characterErr or not character then return false, 'employee was not found' end
     local activeOk, active = pcall(json.decode, character.job or '{}')
     if activeOk and active and active.name == name then
