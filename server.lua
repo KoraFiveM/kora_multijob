@@ -1,7 +1,6 @@
 local playerJobs = {}
 local sourceCitizenids = {}
 local schemaReady = false
-local saveActiveJob
 
 CreateThread(function()
     local ready = Kora.sql.ready(60000)
@@ -76,7 +75,7 @@ end
 
 local function load(src)
     if not schemaReady then return nil, 'job storage is still starting' end
-    
+
     local citizenid
     if type(src) == 'string' then
         citizenid = src
@@ -100,7 +99,7 @@ local function load(src)
     local data = player(src)
     if not data then return nil, 'no roster on file and character is not online to create one' end
 
-    playerJobs[citizenid] = { ['unemployed'] = jobRecord('unemployed', 1) }
+    playerJobs[citizenid] = { unemployed = jobRecord('unemployed', 1) }
     if data.job and data.job.name and data.job.name ~= 'unemployed' then
         local record = jobRecord(data.job.name, data.job.grade and data.job.grade.level)
         if record then playerJobs[citizenid][data.job.name] = record end
@@ -113,7 +112,7 @@ local function load(src)
     return playerJobs[citizenid]
 end
 
-saveActiveJob = function(src)
+local function saveActiveJob(src)
     local data = player(src)
     local active = data and data.job
     if not active then return false, 'no active job found' end
@@ -154,9 +153,7 @@ local function notify(src, type_, message)
     Kora.notify.send(src, { title = 'Employment', type = type_, message = message })
 end
 
-Kora.callback.register('qbmultijob:server:getRoster', function(src)
-    return view(src)
-end)
+Kora.callback.register('qbmultijob:server:getRoster', view)
 
 Kora.callback.register('qbmultijob:server:selectJob', function(src, name)
     if type(name) ~= 'string' then return false, 'invalid job' end
@@ -204,7 +201,6 @@ Kora.callback.register('qbmultijob:server:quitJob', function(src, name)
     return true, view(src)
 end)
 
-
 local function canManage(src) return src == 0 or exports.kora_core:hasPermission(src, 'admin') end
 
 local function addJob(src, name, level)
@@ -228,8 +224,7 @@ local function addJob(src, name, level)
     end
 
     roster[name] = record
-    local ok = save(citizenid)
-    if not ok then return false, 'could not save roster' end
+    if not save(citizenid) then return false, 'could not save roster' end
     return true
 end
 
@@ -257,7 +252,6 @@ for _, command in ipairs({
         command.handler(src, args)
     end)
 end
-
 
 local function invalidate(src)
     local citizenid = sourceCitizenids[src] or citizenIdOf(src)
@@ -372,7 +366,7 @@ local function removeEmployeeJob(citizenid, name)
     return saved, saveErr
 end
 
-AddEventHandler('QBCore:Server:OnPlayerUnload', function(src) invalidate(src) end)
+AddEventHandler('QBCore:Server:OnPlayerUnload', invalidate)
 AddEventHandler('qbcore:server:playerLoaded', function(src)
     invalidate(src)
     saveActiveJob(src)
@@ -390,7 +384,7 @@ CreateThread(function()
 end)
 
 exports('addJob', addJob)
-exports('getRoster', function(src) return view(src) end)
+exports('getRoster', view)
 exports('getEmployees', getEmployees)
 exports('setEmployeeJob', setEmployeeJob)
 exports('removeEmployeeJob', removeEmployeeJob)
