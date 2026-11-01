@@ -72,7 +72,7 @@ local function appDefinition()
     return {
         id = APP_ID,
         title = 'Employment',
-        description = ('%d of %d jobs saved'):format(#(roster.jobs or {}), Config.maxJobs + 1),
+        description = ('%d of %d jobs saved'):format(count, Config.maxJobs + 1),
         icon = 'briefcase-business',
         layout = 'compact',
         placement = 'right',
@@ -80,7 +80,7 @@ local function appDefinition()
         height = heights[math.min(count, #heights)] or heights[1],
         navigation = {
             {
-                id = 'roster', label = 'My jobs', icon = 'briefcase-business', badge = #(roster.jobs or {}),
+                id = 'roster', label = 'My jobs', icon = 'briefcase-business', badge = count,
                 content = {
                     blocks = blocks,
                 },
