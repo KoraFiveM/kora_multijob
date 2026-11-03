@@ -22,11 +22,8 @@ shared_scripts {
 }
 
 server_scripts {
+    'schema.lua',
     'server.lua',
 }
 
 client_script 'client.lua'
-
-files {
-    'sql/001_jobs.sql',
-}

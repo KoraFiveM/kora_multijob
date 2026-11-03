@@ -7,8 +7,8 @@ kora_core remains the only authority for the active job and duty state.
 ## Install
 
 Ensure `kora_lib`, `kora_sql`, and `kora_core` before `kora_multijob`. The resource applies
-its own `qbmultijob_jobs` migration when kora_sql is ready; do not import the old
-`multijob.sql` manually.
+its `qbmultijob_jobs` table (declared in `schema.lua`) when kora_sql is ready; do not import
+the old `multijob.sql` manually.
 
 ## Administration
 

@@ -36,23 +36,9 @@ _G.exports = setmetatable({
 _G.Kora = {
     sql = {
         ready = function() return true end,
-        migrate = function(resource, definitions)
-            assert(resource == 'kora_multijob', 'the migration resource must be qbmultijob')
-            migrations = definitions
-            return true
-        end,
-        migrateFiles = function(resource, definitions)
-            local prepared = {}
-            for index = 1, #definitions do
-                local definition = definitions[index]
-                prepared[index] = {
-                    version = definition.version,
-                    name = definition.name,
-                    sql = LoadResourceFile(resource, definition.file),
-                }
-            end
-            migrations = prepared
-            return true
+        ensureTables = function(specs)
+            migrations = specs
+            return {}
         end,
         single = function() return nil end,
         upsert = function(_, _, rows)
@@ -75,11 +61,16 @@ _G.Kora = {
 }
 
 dofile(root .. 'config.lua')
+dofile(root .. 'schema.lua')
 dofile(root .. 'server.lua')
 
-assert(migrations and #migrations == 1, 'the unreleased qbmultijob schema must be one migration')
-assert(migrations[1].sql:match('CREATE TABLE IF NOT EXISTS'), 'the initial migration must be retry-safe DDL')
-assert(migrations[1].sql:match('`name` VARCHAR%(128%)'), 'the initial migration must include roster names')
+assert(migrations == QBMultijobSchema and #migrations == 1, 'the qbmultijob schema must be declared through ensureTables')
+assert(migrations[1].name == 'qbmultijob_jobs', 'the schema must declare qbmultijob_jobs')
+local hasName
+for _, column in ipairs(migrations[1].columns) do
+    if column.name == 'name' and column.type == 'varchar(128)' then hasName = true end
+end
+assert(hasName, 'the schema must include roster names')
 
 handlers['QBCore:Server:OnJobUpdate'](1)
 

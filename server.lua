@@ -8,12 +8,15 @@ CreateThread(function()
         print('^1[qbmultijob]^7 qbsql was not ready; multi-job persistence is unavailable.')
         return
     end
-    local _, err = Kora.sql.migrateFiles(GetCurrentResourceName(), {
-        { version = 1, name = 'jobs', file = 'sql/001_jobs.sql' },
-    })
+    local reports, err = Kora.sql.ensureTables(QBMultijobSchema)
     if err then
         print(('^1[qbmultijob]^7 migration failed: %s'):format(err))
         return
+    end
+    for _, report in ipairs(reports or {}) do
+        for _, warning in ipairs(report.warnings or {}) do
+            print(('^3[qbmultijob]^7 schema warning: %s'):format(tostring(warning)))
+        end
     end
     schemaReady = true
 end)
