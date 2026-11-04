@@ -1,13 +1,13 @@
 # kora_multijob
 
-`kora_multijob` keeps a character's earned jobs in `qbmultijob_jobs` and lets the
+`kora_multijob` keeps a character's earned jobs in `kora_multijob_jobs` and lets the
 player choose their active kora_core job with `/multijob` (default key: `J`).
 kora_core remains the only authority for the active job and duty state.
 
 ## Install
 
 Ensure `kora_lib`, `kora_sql`, and `kora_core` before `kora_multijob`. The resource applies
-its `qbmultijob_jobs` table (declared in `schema.lua`) when kora_sql is ready; do not import
+its `kora_multijob_jobs` table (declared in `schema.lua`) when kora_sql is ready; do not import
 the old `multijob.sql` manually.
 
 ## Administration

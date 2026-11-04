@@ -65,7 +65,7 @@ dofile(root .. 'schema.lua')
 dofile(root .. 'server.lua')
 
 assert(migrations == QBMultijobSchema and #migrations == 1, 'the qbmultijob schema must be declared through ensureTables')
-assert(migrations[1].name == 'qbmultijob_jobs', 'the schema must declare qbmultijob_jobs')
+assert(migrations[1].name == 'kora_multijob_jobs', 'the schema must declare kora_multijob_jobs')
 local hasName
 for _, column in ipairs(migrations[1].columns) do
     if column.name == 'name' and column.type == 'varchar(128)' then hasName = true end

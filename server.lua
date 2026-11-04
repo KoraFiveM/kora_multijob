@@ -70,7 +70,7 @@ local function save(citizenid, name)
     if not jobs then return false, 'no roster entry found' end
     local cols = { jobs = json.encode(jobs) }
     if type(name) == 'string' and name ~= '' then cols.name = name end
-    local _, err = Kora.sql.upsert('qbmultijob_jobs', 'citizenid', {
+    local _, err = Kora.sql.upsert('kora_multijob_jobs', 'citizenid', {
         { pk = citizenid, cols = cols },
     })
     return not err
@@ -90,7 +90,7 @@ local function load(src)
     if not citizenid then return nil, 'could not resolve citizenid' end
     if playerJobs[citizenid] then return playerJobs[citizenid] end
 
-    local row, err = Kora.sql.single('SELECT `name`, `jobs` FROM `qbmultijob_jobs` WHERE `citizenid` = ?', { citizenid })
+    local row, err = Kora.sql.single('SELECT `name`, `jobs` FROM `kora_multijob_jobs` WHERE `citizenid` = ?', { citizenid })
     if err then return nil, 'could not load saved jobs' end
     if row then
         local ok, decoded = pcall(json.decode, row.jobs or '{}')
@@ -265,7 +265,7 @@ end
 
 local function getEmployees(jobName)
     if not schemaReady or not jobRecord(jobName, 1) then return nil, 'unknown job or job storage is still starting' end
-    local rows, err = Kora.sql.query('SELECT `citizenid`, `name`, `jobs` FROM `qbmultijob_jobs`')
+    local rows, err = Kora.sql.query('SELECT `citizenid`, `name`, `jobs` FROM `kora_multijob_jobs`')
     if err then return nil, 'could not load employee roster' end
 
     local employees = {}
@@ -310,7 +310,7 @@ local function setEmployeeJob(citizenid, name, level)
         return save(citizenid), 'could not save roster'
     end
 
-    local row, rowErr = Kora.sql.single('SELECT `name`, `jobs` FROM `qbmultijob_jobs` WHERE `citizenid` = ?', { citizenid })
+    local row, rowErr = Kora.sql.single('SELECT `name`, `jobs` FROM `kora_multijob_jobs` WHERE `citizenid` = ?', { citizenid })
     if rowErr then return false, 'could not load employee jobs' end
     local character, characterErr = Kora.sql.single('SELECT `name`, `job` FROM `players` WHERE `citizenid` = ? AND `deleted_at` IS NULL', { citizenid })
     if characterErr or not character then return false, 'employee was not found' end
@@ -349,7 +349,7 @@ local function removeEmployeeJob(citizenid, name)
         return save(citizenid), 'could not save roster'
     end
 
-    local row, rowErr = Kora.sql.single('SELECT `jobs` FROM `qbmultijob_jobs` WHERE `citizenid` = ?', { citizenid })
+    local row, rowErr = Kora.sql.single('SELECT `jobs` FROM `kora_multijob_jobs` WHERE `citizenid` = ?', { citizenid })
     if rowErr then return false, 'could not load employee jobs' end
     if not row then return false, 'employee was not found' end
     local ok, decoded = pcall(json.decode, row.jobs or '{}')

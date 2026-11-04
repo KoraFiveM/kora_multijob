@@ -1,6 +1,6 @@
 QBMultijobSchema = {
     {
-        name = 'qbmultijob_jobs',
+        name = 'kora_multijob_jobs',
         columns = {
             { name = 'citizenid', type = 'varchar(64)' },
             { name = 'name', type = 'varchar(128)', default = 'unknown' },
