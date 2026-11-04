@@ -10,7 +10,7 @@ CreateThread(function()
     end
     local reports, err = Kora.sql.ensureTables(QBMultijobSchema)
     if err then
-        print(('^1[qbmultijob]^7 migration failed: %s'):format(err))
+        print(('^1[qbmultijob]^7 schema setup failed: %s'):format(err))
         return
     end
     for _, report in ipairs(reports or {}) do
