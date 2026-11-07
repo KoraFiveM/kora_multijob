@@ -16,12 +16,12 @@ dependency 'kora_core'
 
 shared_scripts {
     '@kora_lib/init.lua',
-    '@kora_sql/init.lua',
     '@kora_core/init.lua',
     'config.lua',
 }
 
 server_scripts {
+    '@kora_sql/init.lua',
     'schema.lua',
     'server.lua',
 }

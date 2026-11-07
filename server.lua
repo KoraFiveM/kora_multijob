@@ -307,7 +307,8 @@ local function setEmployeeJob(citizenid, name, level)
             local changed, changeErr = exports.kora_core:setJob(target.source, name, record.level)
             if not changed then return false, changeErr or 'could not update active job' end
         end
-        return save(citizenid), 'could not save roster'
+        if save(citizenid) then return true end
+        return false, 'could not save roster'
     end
 
     local row, rowErr = Kora.sql.single('SELECT `name`, `jobs` FROM `kora_multijob_jobs` WHERE `citizenid` = ?', { citizenid })
@@ -346,7 +347,8 @@ local function removeEmployeeJob(citizenid, name)
             local changed, changeErr = exports.kora_core:setJob(target.source, 'unemployed', 1)
             if not changed then return false, changeErr or 'could not clear active job' end
         end
-        return save(citizenid), 'could not save roster'
+        if save(citizenid) then return true end
+        return false, 'could not save roster'
     end
 
     local row, rowErr = Kora.sql.single('SELECT `jobs` FROM `kora_multijob_jobs` WHERE `citizenid` = ?', { citizenid })
