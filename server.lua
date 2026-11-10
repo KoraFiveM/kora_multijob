@@ -246,7 +246,8 @@ for _, command in ipairs({
         if not roster or not roster[name] or name == 'unemployed' then return notify(src, 'error', 'Player does not have that removable job.') end
         if exports.kora_core:getPlayerData(target, { 'job', 'name' }) == name then return notify(src, 'error', 'Player must change active job first.') end
         roster[name] = nil
-        local ok = save(target)
+        -- save() is keyed by citizenid; the roster above was loaded for this target.
+        local ok = save(citizenIdOf(target))
         notify(src, ok and 'success' or 'error', ok and 'Job removed.' or 'Could not save roster.')
     end },
 }) do
