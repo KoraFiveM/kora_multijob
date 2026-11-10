@@ -64,7 +64,7 @@ dofile(root .. 'config.lua')
 dofile(root .. 'schema.lua')
 dofile(root .. 'server.lua')
 
-assert(migrations == QBMultijobSchema and #migrations == 1, 'the qbmultijob schema must be declared through ensureTables')
+assert(migrations == KoraMultijobSchema and #migrations == 1, 'the kora_multijob schema must be declared through ensureTables')
 assert(migrations[1].name == 'kora_multijob_jobs', 'the schema must declare kora_multijob_jobs')
 local hasName
 for _, column in ipairs(migrations[1].columns) do
@@ -74,7 +74,7 @@ assert(hasName, 'the schema must include roster names')
 
 handlers['QBCore:Server:OnJobUpdate'](1)
 
-assert(#writes == 1, 'a qbcore job update must write the roster immediately')
+assert(#writes == 1, 'a kora_core job update must write the roster immediately')
 assert(writes[1].pk == 'CID-1', 'the roster write must use the character citizenid')
-assert(writes[1].cols.jobs == 'police:police:2', 'the roster must retain qbcore’s one-based grade')
-print('qbmultijob server: job updates persist immediately')
+assert(writes[1].cols.jobs == 'police:police:2', 'the roster must retain kora_core’s one-based grade')
+print('kora_multijob server: job updates persist immediately')

@@ -5,17 +5,17 @@ local schemaReady = false
 CreateThread(function()
     local ready = Kora.sql.ready(60000)
     if not ready then
-        print('^1[qbmultijob]^7 qbsql was not ready; multi-job persistence is unavailable.')
+        print('^1[kora_multijob]^7 kora_sql was not ready; multi-job persistence is unavailable.')
         return
     end
-    local reports, err = Kora.sql.ensureTables(QBMultijobSchema)
+    local reports, err = Kora.sql.ensureTables(KoraMultijobSchema)
     if err then
-        print(('^1[qbmultijob]^7 schema setup failed: %s'):format(err))
+        print(('^1[kora_multijob]^7 schema setup failed: %s'):format(err))
         return
     end
     for _, report in ipairs(reports or {}) do
         for _, warning in ipairs(report.warnings or {}) do
-            print(('^3[qbmultijob]^7 schema warning: %s'):format(tostring(warning)))
+            print(('^3[kora_multijob]^7 schema warning: %s'):format(tostring(warning)))
         end
     end
     schemaReady = true
@@ -156,9 +156,9 @@ local function notify(src, type_, message)
     Kora.notify.send(src, { title = 'Employment', type = type_, message = message })
 end
 
-Kora.callback.register('qbmultijob:server:getRoster', view)
+Kora.callback.register('kora_multijob:server:getRoster', view)
 
-Kora.callback.register('qbmultijob:server:selectJob', function(src, name)
+Kora.callback.register('kora_multijob:server:selectJob', function(src, name)
     if type(name) ~= 'string' then return false, 'invalid job' end
 
     local citizenid = citizenIdOf(src)
@@ -176,7 +176,7 @@ Kora.callback.register('qbmultijob:server:selectJob', function(src, name)
     return false, 'could not set active job'
 end)
 
-Kora.callback.register('qbmultijob:server:toggleDuty', function(src)
+Kora.callback.register('kora_multijob:server:toggleDuty', function(src)
     local data = player(src)
     local job = data and data.job
     if not job then return false, 'character not loaded' end
@@ -186,7 +186,7 @@ Kora.callback.register('qbmultijob:server:toggleDuty', function(src)
     return true, view(src)
 end)
 
-Kora.callback.register('qbmultijob:server:quitJob', function(src, name)
+Kora.callback.register('kora_multijob:server:quitJob', function(src, name)
     if type(name) ~= 'string' or name == 'unemployed' then return false, 'that job cannot be removed' end
 
     local data = player(src)
@@ -372,14 +372,14 @@ local function removeEmployeeJob(citizenid, name)
 end
 
 AddEventHandler('QBCore:Server:OnPlayerUnload', invalidate)
-AddEventHandler('qbcore:server:playerLoaded', function(src)
+AddEventHandler('kora_core:server:playerLoaded', function(src)
     invalidate(src)
     saveActiveJob(src)
 end)
 AddEventHandler('QBCore:Server:OnJobUpdate', function(src)
     local ok, err = saveActiveJob(src)
     if not ok and err ~= 'job storage is still starting' and err ~= 'character or job is unavailable' then
-        print(('^1[qbmultijob]^7 could not save job roster for %s: %s'):format(tostring(src), err))
+        print(('^1[kora_multijob]^7 could not save job roster for %s: %s'):format(tostring(src), err))
     end
 end)
 AddEventHandler('playerDropped', function() invalidate(tonumber(source)) end)

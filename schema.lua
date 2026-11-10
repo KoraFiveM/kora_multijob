@@ -1,4 +1,4 @@
-QBMultijobSchema = {
+KoraMultijobSchema = {
     {
         name = 'kora_multijob_jobs',
         columns = {

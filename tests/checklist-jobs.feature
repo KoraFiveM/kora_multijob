@@ -8,12 +8,12 @@ Feature: kora_multijob — Jobs
     Checklist test: Run /multijob or press J; 'Employment' panel opens showing Current job and Saved jobs with 'N of 5 jobs saved'.
     """
     When I run the command "/multijob"
-    Then the "qbmultijob:roster" app opens
+    Then the "kora_multijob:roster" app opens
     And I confirm: the 'Employment' panel shows Current job and Saved jobs
     And I confirm: the Saved jobs section shows a count like 'N of 5 jobs saved' (config default maxJobs is 4; accept the actual configured limit)
     When I manually: close the panel
     And I press the "J" key
-    Then the "qbmultijob:roster" app opens
+    Then the "kora_multijob:roster" app opens
 
   @kora_multijob @checklist @checklist:kora_multijob:current-job-card @cat:jobs
   Scenario: Current job card details
@@ -21,7 +21,7 @@ Feature: kora_multijob — Jobs
     Checklist test: Check current job card: job label, grade label, Grade and Pay metadata, badge On duty/Off duty.
     """
     When I press the "J" key
-    Then the "qbmultijob:roster" app opens
+    Then the "kora_multijob:roster" app opens
     And I confirm: the current job card shows the job label and the grade label
     And I confirm: the current job card shows Grade and Pay metadata
     And I confirm: the current job card shows an On duty or Off duty badge
@@ -33,7 +33,7 @@ Feature: kora_multijob — Jobs
     """
     When I manually: ask a Mod to add a second saved job to my roster if I have fewer than 2
     And I press the "J" key
-    Then the "qbmultijob:roster" app opens
+    Then the "kora_multijob:roster" app opens
     When I manually: click 'Make active' on a saved job that is not the current job
     Then I confirm: that job now appears as Current job in the roster
     And I confirm: my active job changed to that job (check with /playerData or the HUD)
@@ -46,7 +46,7 @@ Feature: kora_multijob — Jobs
     Given my job is "mechanic"
     And I am on duty
     When I press the "J" key
-    Then the "qbmultijob:roster" app opens
+    Then the "kora_multijob:roster" app opens
     When I manually: click 'Go off duty' on the active job
     Then I should be off duty
     And I confirm: the badge shows Off duty
@@ -61,7 +61,7 @@ Feature: kora_multijob — Jobs
     """
     Given my job is "police"
     When I press the "J" key
-    Then the "qbmultijob:roster" app opens
+    Then the "kora_multijob:roster" app opens
     And I confirm: the duty button is absent and 'Duty: Managed by job' is shown (only applies when disabledDuty.police is enabled; otherwise mark Pass if a normal duty button shows)
 
   @kora_multijob @checklist @checklist:kora_multijob:leave-job @cat:jobs
@@ -72,7 +72,7 @@ Feature: kora_multijob — Jobs
     Given my job is "mechanic"
     When I manually: ask a Mod to add a second saved job to my roster if I have only one
     And I press the "J" key
-    Then the "qbmultijob:roster" app opens
+    Then the "kora_multijob:roster" app opens
     When I manually: click 'Leave job' on a non-active saved job and confirm
     Then I should see a notification containing "Job removed from your roster."
     And I confirm: the job is removed from the roster
@@ -85,7 +85,7 @@ Feature: kora_multijob — Jobs
     """
     When I manually: ask a Mod to give me jobs until I have 4 or more saved jobs
     And I press the "J" key
-    Then the "qbmultijob:roster" app opens
+    Then the "kora_multijob:roster" app opens
     And I confirm: the Saved jobs list shows a search box
     When I manually: type a job name in the search box
     Then I confirm: the list is filtered by job
@@ -130,11 +130,11 @@ Feature: kora_multijob — Jobs
     Checklist test: Relog the character; saved jobs and active job are the same as before.
     """
     When I press the "J" key
-    Then the "qbmultijob:roster" app opens
+    Then the "kora_multijob:roster" app opens
     When I manually: note my saved jobs and active job
     And I manually: relog the character
     And I press the "J" key
-    Then the "qbmultijob:roster" app opens
+    Then the "kora_multijob:roster" app opens
     And I confirm: my saved jobs and active job are the same as before
 
   @kora_multijob @checklist @checklist:kora_multijob:job-icons @cat:jobs
@@ -144,5 +144,5 @@ Feature: kora_multijob — Jobs
     """
     When I manually: ask a Mod to add police, ambulance, mechanic, taxi, lawyer and news jobs to my roster
     And I press the "J" key
-    Then the "qbmultijob:roster" app opens
+    Then the "kora_multijob:roster" app opens
     And I confirm: the roster shows a distinct icon for each of those jobs

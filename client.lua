@@ -1,4 +1,4 @@
-local APP_ID = 'qbmultijob:roster'
+local APP_ID = 'kora_multijob:roster'
 local currentRoster
 local appActive = false
 
@@ -89,9 +89,9 @@ local function appDefinition()
         onAction = function(actionId, context)
             local jobName = context and context.itemId
             local callback
-            if actionId == 'multijob:select' then callback = 'qbmultijob:server:selectJob'
-            elseif actionId == 'multijob:duty' then callback = 'qbmultijob:server:toggleDuty'
-            elseif actionId == 'multijob:quit' then callback = 'qbmultijob:server:quitJob'
+            if actionId == 'multijob:select' then callback = 'kora_multijob:server:selectJob'
+            elseif actionId == 'multijob:duty' then callback = 'kora_multijob:server:toggleDuty'
+            elseif actionId == 'multijob:quit' then callback = 'kora_multijob:server:quitJob'
             else error('That roster action is no longer available.') end
 
             local ok, result
@@ -114,7 +114,7 @@ local function openMenu()
 
     CreateThread(function()
         local ok, err = pcall(function()
-            local roster = Kora.callback.trigger('qbmultijob:server:getRoster')
+            local roster = Kora.callback.trigger('kora_multijob:server:getRoster')
             if type(roster) ~= 'table' then
                 Kora.notify.send({ title = 'Employment', type = 'error', message = 'Your job roster is unavailable.' })
                 return
@@ -129,7 +129,7 @@ local function openMenu()
         appActive = false
 
         if not ok then
-            print(('^1[qbmultijob]^7 Could not open the job roster: %s'):format(tostring(err)))
+            print(('^1[kora_multijob]^7 Could not open the job roster: %s'):format(tostring(err)))
             Kora.notify.send({ title = 'Employment', type = 'error', message = 'Your job roster could not be opened.' })
         end
     end)

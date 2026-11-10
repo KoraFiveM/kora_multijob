@@ -33,10 +33,10 @@ _G.Kora = {
     notify = { send = function() end },
     callback = { trigger = function(name, value)
         calls[#calls + 1] = { name = name, value = value }
-        if name == 'qbmultijob:server:getRoster' then return initial end
-        if name == 'qbmultijob:server:selectJob' then return true, selected end
-        if name == 'qbmultijob:server:quitJob' then return true, afterQuit end
-        if name == 'qbmultijob:server:toggleDuty' then return true, onDuty end
+        if name == 'kora_multijob:server:getRoster' then return initial end
+        if name == 'kora_multijob:server:selectJob' then return true, selected end
+        if name == 'kora_multijob:server:quitJob' then return true, afterQuit end
+        if name == 'kora_multijob:server:toggleDuty' then return true, onDuty end
     end },
     nui = {
         registerApp = function(value) definition = value end,
@@ -63,7 +63,7 @@ local function truthy(value, message)
 end
 
 commands[Config.command]()
-equal(definition.id, 'qbmultijob:roster', 'the shared app has a namespaced id')
+equal(definition.id, 'kora_multijob:roster', 'the shared app has a namespaced id')
 equal(definition.layout, 'compact', 'the roster uses compact AppShell layout')
 equal(definition.height, 725, 'a full roster has space for its saved jobs')
 equal(definition.description, '5 of 5 jobs saved', 'the header shows roster capacity')
@@ -86,11 +86,11 @@ equal(savedList.items[1].actions[1].id, 'multijob:select', 'an inactive job can 
 equal(savedList.items[1].actions[2].id, 'multijob:quit', 'an inactive job can be removed')
 truthy(savedList.items[1].actions[2].confirm, 'removing a job requires confirmation')
 
-equal(calls[2].name, 'qbmultijob:server:selectJob', 'select routes to the server')
+equal(calls[2].name, 'kora_multijob:server:selectJob', 'select routes to the server')
 equal(calls[2].value, 'mechanic', 'select sends only the selected job id')
-equal(calls[3].name, 'qbmultijob:server:quitJob', 'quit routes to the server')
+equal(calls[3].name, 'kora_multijob:server:quitJob', 'quit routes to the server')
 equal(calls[3].value, 'ambulance', 'quit sends only the selected job id')
-equal(calls[4].name, 'qbmultijob:server:toggleDuty', 'duty routes to the active-job endpoint')
+equal(calls[4].name, 'kora_multijob:server:toggleDuty', 'duty routes to the active-job endpoint')
 truthy(results.select.update.navigation, 'select returns a live AppShell update')
 truthy(results.quit.update.navigation, 'quit returns a live AppShell update')
 truthy(results.duty.update.navigation, 'duty returns a live AppShell update')
@@ -103,4 +103,4 @@ clientFile:close()
 truthy(not clientSource:find('Kora.nui.isAppOpen', 1, true),
     'job roster owns its AppShell active state without the broken kora_lib export call')
 
-print(('qbmultijob client: %d assertions passed'):format(passed))
+print(('kora_multijob client: %d assertions passed'):format(passed))

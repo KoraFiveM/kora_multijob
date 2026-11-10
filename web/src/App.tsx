@@ -13,8 +13,8 @@ export function App() {
 
   useEffect(() => {
     const handler = (event: MessageEvent<{ action?: string; data?: unknown }>) => {
-      if (event.data.action === "qbmultijob:open") setRoster(event.data.data as Roster);
-      if (event.data.action === "qbmultijob:close") { setRoster(null); setNotice(null); }
+      if (event.data.action === "kora_multijob:open") setRoster(event.data.data as Roster);
+      if (event.data.action === "kora_multijob:close") { setRoster(null); setNotice(null); }
     };
     const key = (event: KeyboardEvent) => { if (event.key === "Escape" && roster) void close(); };
     window.addEventListener("message", handler); window.addEventListener("keydown", key);
@@ -28,7 +28,7 @@ export function App() {
     if (reply?.roster) setRoster(reply.roster);
     if (!reply?.ok) setNotice(reply?.error ?? "That action could not be completed.");
   }
-  async function close() { await nui("qbmultijob:close"); setRoster(null); }
+  async function close() { await nui("kora_multijob:close"); setRoster(null); }
   if (!roster) return null;
 
   return <main className="roster-shell" aria-label="Job roster">
@@ -49,10 +49,10 @@ export function App() {
           <div className="pay-row"><span><CircleDollarSign size={15} /> Paycheck</span><strong>${job.pay.toLocaleString()}<small>/hr</small></strong></div>
           <footer>
             {current
-              ? <button className={`duty-button ${roster.active.onDuty ? "on" : ""}`} disabled={busy} onClick={() => void run("qbmultijob:toggleDuty")}><Power size={14} />{roster.active.onDuty ? "End duty" : "Start duty"}</button>
+              ? <button className={`duty-button ${roster.active.onDuty ? "on" : ""}`} disabled={busy} onClick={() => void run("kora_multijob:toggleDuty")}><Power size={14} />{roster.active.onDuty ? "End duty" : "Start duty"}</button>
               : <>
-                <button className="select-button" disabled={busy} onClick={() => void run("qbmultijob:selectJob", { name: job.name })}>Set active <ChevronRight size={15} /></button>
-                {job.name !== "unemployed" && <button className="leave-button" disabled={busy} onClick={() => void run("qbmultijob:quitJob", { name: job.name })} title="Leave role"><LogOut size={15} /></button>}
+                <button className="select-button" disabled={busy} onClick={() => void run("kora_multijob:selectJob", { name: job.name })}>Set active <ChevronRight size={15} /></button>
+                {job.name !== "unemployed" && <button className="leave-button" disabled={busy} onClick={() => void run("kora_multijob:quitJob", { name: job.name })} title="Leave role"><LogOut size={15} /></button>}
               </>}
           </footer>
         </article>;

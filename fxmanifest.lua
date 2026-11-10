@@ -3,11 +3,9 @@ game 'gta5'
 lua54 'yes'
 
 name 'kora_multijob'
--- Keep the legacy resource name resolvable for exports['qbmultijob'] callers.
-provide 'qbmultijob'
 author 'qbcore2'
 version '1.0.0'
-description 'Saved multi-job roster for qbcore'
+description 'Saved multi-job roster for kora_core'
 
 dependency 'kora_theme'
 dependency 'kora_lib'
