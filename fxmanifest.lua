@@ -15,16 +15,20 @@ dependency 'kora_core'
 shared_scripts {
     '@kora_lib/init.lua',
     '@kora_core/init.lua',
-    'config.lua',
+    'shared/config.lua',
 }
 
 server_scripts {
     '@kora_sql/init.lua',
-    'schema.lua',
-    'server.lua',
+    'server/schema.lua',
+    'server/server.lua',
 }
 
-client_script 'client.lua'
+client_script 'client/client.lua'
+
+files {
+    'locales/*.lua',
+}
 
 -- kora_qa: Gherkin test scenarios (converted legacy tests), see [kora]/kora_qa/README.md
 qa_feature 'tests/*.feature'
