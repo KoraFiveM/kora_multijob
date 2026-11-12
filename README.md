@@ -41,3 +41,5 @@ Edit `config.lua` to set the roster limit, command/key binding, duty-locked
 roles, and optional icon names. The searchable roster is rendered by kora_lib's
 compact AppShell, so focus, responsive layout, and the shared theme stay
 consistent with the other administrative interfaces.
+
+Full documentation: see [docs/](docs/index.md).
