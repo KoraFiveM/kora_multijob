@@ -1,6 +1,6 @@
 ---
 title: Events and callbacks
-sidebar_position: 6
+sidebar_position: 7
 ---
 
 # Events and callbacks
@@ -11,7 +11,7 @@ Registered with `Kora.callback.register` and used by the client UI.
 
 | Callback | Arguments | Returns |
 | --- | --- | --- |
-| `kora_multijob:server:getRoster` | none | The roster view (see [Exports](./exports.md), `getRoster`). |
+| `kora_multijob:server:getRoster` | none | The roster view (see [API reference](./api/cross-resource-exports.md), `getRoster`). |
 | `kora_multijob:server:selectJob` | job name | `true, roster` after `kora_core` `setJob` with the stored grade, else `false, reason`. Job must be in the roster. |
 | `kora_multijob:server:toggleDuty` | none | `true, roster` after `setJobDuty`, else `false, reason`. Refused for jobs in `Config.disabledDuty`. |
 | `kora_multijob:server:quitJob` | job name | `true, roster`, else `false, reason`. Refuses `unemployed`, jobs not in the roster, and the active job. Notifies "Job removed from your roster." |

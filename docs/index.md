@@ -9,16 +9,18 @@ sidebar_position: 1
 
 The release version is the `version` field in `fxmanifest.lua`.
 
-## Pages
+## Documentation map
 
-- [Installation and dependencies](./installation.md)
-- [Configuration](./configuration.md)
-- [Commands and permissions](./commands.md)
-- [Exports](./exports.md)
-- [Events and callbacks](./events.md)
-- [Database](./database.md)
-- [User interface](./ui.md)
-- [Troubleshooting](./troubleshooting.md)
+- [Installation](./installation.md): dependencies, manifest load order, database schema and startup notes.
+- [How to use](./how-to-use.md): roster concepts, lifecycle, the roster panel, admin commands and management from other resources.
+- [Commands](./commands.md): `/multijob`, `/givejob`, `/removejob` and permissions.
+- [API reference](./api/index.md): server exports overview.
+  - [Cross-resource exports](./api/cross-resource-exports.md): `addJob`, `getRoster`, `getEmployees`, `setEmployeeJob`, `removeEmployeeJob`, `invalidate`.
+- [Configuration](./configuration.md): `config.lua` options, duty lock, icons and limit semantics.
+- [Events and callbacks](./events.md): server callbacks and the events the resource listens to.
+- [Database](./database.md): the `kora_multijob_jobs` table and other tables read.
+- [User interface](./ui.md): the `kora_lib` Employment app and the unused `web/` project.
+- [Troubleshooting](./troubleshooting.md): common console messages and fixes.
 
 ## Feature summary
 
