@@ -3,7 +3,7 @@ local currentRoster
 local appActive = false
 
 local function money(value)
-    return ('$%d'):format(math.floor(tonumber(value) or 0))
+    return Kora.lang('currency', math.floor(tonumber(value) or 0))
 end
 
 local function appDefinition()
@@ -17,33 +17,48 @@ local function appDefinition()
         local dutyLocked = Config.disabledDuty[job.name] == true
         local actions = {}
         if not selected then
-            actions[#actions + 1] = { id = 'multijob:select', label = 'Make active', icon = 'check', variant = 'primary' }
+            actions[#actions + 1] = {
+                id = 'multijob:select',
+                label = Kora.lang('make_active'),
+                icon = 'check',
+                variant = 'primary',
+            }
         elseif not dutyLocked then
             actions[#actions + 1] = {
                 id = 'multijob:duty',
-                label = active.onDuty and 'Go off duty' or 'Go on duty',
+                label = active.onDuty and Kora.lang('go_off_duty') or Kora.lang('go_on_duty'),
                 icon = 'activity',
                 variant = active.onDuty and 'secondary' or 'primary',
             }
         end
         if job.name ~= 'unemployed' and not selected then
-            actions[#actions + 1] = { id = 'multijob:quit', label = 'Leave job', icon = 'trash-2', variant = 'destructive',
-                confirm = ('Remove %s from your saved roster?'):format(job.jobLabel) }
+            actions[#actions + 1] = {
+                id = 'multijob:quit',
+                label = Kora.lang('leave_job'),
+                icon = 'trash-2',
+                variant = 'destructive',
+                confirm = Kora.lang('remove_confirmation', job.jobLabel),
+            }
         end
 
         local metadata = {
-            { label = 'Grade', value = job.level },
-            { label = 'Pay', value = money(job.pay) },
+            { label = Kora.lang('grade'), value = job.level },
+            { label = Kora.lang('pay'), value = money(job.pay) },
         }
         if selected and dutyLocked then
-            metadata[#metadata + 1] = { label = 'Duty', value = 'Managed by job' }
+            metadata[#metadata + 1] = {
+                label = Kora.lang('duty'),
+                value = Kora.lang('managed_by_job'),
+            }
         end
 
         local item = {
-            id = job.name, label = job.jobLabel, description = job.gradeLabel,
+            id = job.name,
+            label = job.jobLabel,
+            description = job.gradeLabel,
             icon = Config.icons[job.name] or 'BriefcaseBusiness',
             tone = selected and (active.onDuty and 'success' or 'primary') or 'neutral',
-            badge = selected and (active.onDuty and 'On duty' or 'Off duty') or nil,
+            badge = selected and (active.onDuty and Kora.lang('on_duty') or Kora.lang('off_duty')) or nil,
             metadata = metadata,
             actions = actions,
         }
@@ -57,22 +72,31 @@ local function appDefinition()
 
     local blocks = {
         {
-            type = 'list', id = 'active-job', title = 'Current job', layout = 'list', items = activeItems,
-            empty = 'Your current job is unavailable.',
+            type = 'list',
+            id = 'active-job',
+            title = Kora.lang('current_job'),
+            layout = 'list',
+            items = activeItems,
+            empty = Kora.lang('current_job_unavailable'),
         },
     }
     if #savedItems > 0 then
         blocks[#blocks + 1] = {
-            type = 'list', id = 'saved-jobs', title = 'Saved jobs', layout = 'list',
-            searchable = #savedItems >= 4, searchPlaceholder = 'Search jobs or ranks…', items = savedItems,
+            type = 'list',
+            id = 'saved-jobs',
+            title = Kora.lang('saved_jobs'),
+            layout = 'list',
+            searchable = #savedItems >= 4,
+            searchPlaceholder = Kora.lang('search_jobs'),
+            items = savedItems,
         }
     end
     local count = #(roster.jobs or {})
     local heights = { 500, 500, 525, 600, 725 }
     return {
         id = APP_ID,
-        title = 'Employment',
-        description = ('%d of %d jobs saved'):format(count, Config.maxJobs + 1),
+        title = Kora.lang('title'),
+        description = Kora.lang('jobs_saved', count, Config.maxJobs + 1),
         icon = 'briefcase-business',
         layout = 'compact',
         placement = 'right',
@@ -80,7 +104,10 @@ local function appDefinition()
         height = heights[math.min(count, #heights)] or heights[1],
         navigation = {
             {
-                id = 'roster', label = 'My jobs', icon = 'briefcase-business', badge = count,
+                id = 'roster',
+                label = Kora.lang('my_jobs'),
+                icon = 'briefcase-business',
+                badge = count,
                 content = {
                     blocks = blocks,
                 },
@@ -98,12 +125,26 @@ local function appDefinition()
             if actionId == 'multijob:duty' then ok, result = Kora.callback.trigger(callback)
             else ok, result = Kora.callback.trigger(callback, jobName) end
             if not ok or type(result) ~= 'table' then
-                return { notice = { tone = 'destructive', message = type(result) == 'string' and result or 'The roster change was declined.' } }
+                local message = type(result) == 'string' and result or 'roster_change_declined'
+                return {
+                    notice = {
+                        tone = 'destructive',
+                        message = Kora.lang(message),
+                    },
+                }
             end
             currentRoster = result
             local updated = appDefinition()
-            return { update = { navigation = updated.navigation, description = updated.description },
-                notice = { tone = 'success', message = 'Job roster updated.' } }
+            return {
+                update = {
+                    navigation = updated.navigation,
+                    description = updated.description,
+                },
+                notice = {
+                    tone = 'success',
+                    message = Kora.lang('roster_updated'),
+                },
+            }
         end,
     }
 end
@@ -116,7 +157,11 @@ local function openMenu()
         local ok, err = pcall(function()
             local roster = Kora.callback.trigger('kora_multijob:server:getRoster')
             if type(roster) ~= 'table' then
-                Kora.notify.send({ title = 'Employment', type = 'error', message = 'Your job roster is unavailable.' })
+                Kora.notify.send({
+                    title = Kora.lang('title'),
+                    type = 'error',
+                    message = Kora.lang('roster_unavailable'),
+                })
                 return
             end
 
@@ -130,10 +175,22 @@ local function openMenu()
 
         if not ok then
             print(('^1[kora_multijob]^7 Could not open the job roster: %s'):format(tostring(err)))
-            Kora.notify.send({ title = 'Employment', type = 'error', message = 'Your job roster could not be opened.' })
+            Kora.notify.send({
+                title = Kora.lang('title'),
+                type = 'error',
+                message = Kora.lang('roster_open_failed'),
+            })
         end
     end)
 end
 
 RegisterCommand(Config.command, openMenu, false)
-RegisterKeyMapping(Config.command, 'Open job roster', 'keyboard', Config.keybind)
+RegisterKeyMapping(Config.command, Kora.lang('open_job_roster'), 'keyboard', Config.keybind)
+
+RegisterNetEvent('kora_multijob:client:notify', function(type_, key, ...)
+    Kora.notify.send({
+        title = Kora.lang('title'),
+        type = type_,
+        message = Kora.lang(key, ...),
+    })
+end)
