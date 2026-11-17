@@ -35,4 +35,4 @@ The limit is enforced only by `addJob` (used by `/givejob` and the `addJob` expo
 
 ## Text
 
-User-visible strings are hardcoded in English in `client.lua` and `server.lua`; the resource has no locale files.
+User-visible strings come from `locales/<language>.lua` through `Kora.lang`. The server sends locale keys and the client translates them, so the manifest ships the `locales/` folder to clients (`files { 'locales/*.lua' }`); client-side lookups can only read files the client has downloaded. The language follows kora_lib's `kora_locale` and `kora_locales` convars and the player's `/language` choice, and missing keys fall back to English.

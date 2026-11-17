@@ -26,5 +26,9 @@ server_scripts {
 
 client_script 'client/client.lua'
 
+-- Client-side Kora.lang reads these with LoadResourceFile, which only sees
+-- files shipped to the client.
+files { 'locales/*.lua' }
+
 -- kora_qa: Gherkin test scenarios (converted legacy tests), see [kora]/kora_qa/README.md
 qa_feature 'tests/*.feature'
