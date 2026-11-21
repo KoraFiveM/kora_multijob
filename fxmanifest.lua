@@ -4,7 +4,7 @@ lua54 'yes'
 
 name 'kora_multijob'
 author 'Kora'
-version '0.2.1'
+version '0.2.2'
 description 'Saved multi-job roster for kora_core'
 
 dependency 'kora_theme'
